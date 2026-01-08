@@ -1,11 +1,11 @@
 #defining our parser function
-def parser(x):
+def fasta_parser(filename):
     all_seq =[]
     current_id = None
     current_seq = []
     valid = set("ACGTUNRYSWKMBDHV-.")
 
-    with open(x, 'r') as fasta: 
+    with open(filename, 'r') as fasta: 
         for line in fasta: 
             line = line.strip() 
 

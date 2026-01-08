@@ -1,9 +1,4 @@
 #this is the file with the statistics involved. we will be calculating length of sequences
-from fasta import parser
-# temporary testing
-filename = "test.fasta"
-sequences = parser(filename)
-print(sequences)
 valid = "ACGTUNRYSWKMBDHV-."
 revcomp_dict = {
     "A":"T", "T":"A", "G":"C", "C":"G", "U":"A",
