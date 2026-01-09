@@ -11,7 +11,7 @@ class sequence():
 
     def __init__(self, id, sequence):
         self.id = id
-        self.sequence = sequence
+        self.sequence = sequence.upper()
 
     def print_sequence_lengths(self):
         return len(self.sequence)
