@@ -2,7 +2,6 @@ from tabulate import tabulate
 import argparse
 from fasta import fasta_parser
 from stats import sequence
-valid = "ACGTUNRYSWKMBDHV-."
 
 def print_sequence_lengths_formatted(sequences):
     table = [[s.id, s.print_sequence_lengths()] for s in sequences]
@@ -51,8 +50,8 @@ parser.add_argument("--basecount", "-b", help ="Compute total count for bases pe
 parser.add_argument("--summary", help="Print summary statistics", action="store_true")
 args = parser.parse_args()
 
-seq_dict = fasta_parser(args.file)
-sequences = [sequence(d['id'], d['sequence']) for d in seq_dict]
+sequences = fasta_parser(args.file)
+
 if not any([args.length, args.gc, args.revcomp, args.basecount, args.summary]):
     print_summary(sequences)
     exit()

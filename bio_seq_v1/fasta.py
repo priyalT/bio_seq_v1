@@ -1,5 +1,5 @@
 #defining our parser function
-from bio_seq_v1.stats import sequence
+from stats import sequence
 
 def fasta_parser(filename):
     all_seq =[]

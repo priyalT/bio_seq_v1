@@ -17,12 +17,12 @@ class sequence():
         return len(self.sequence)
     
     def base_count(self):
-        for b in self.valid:
-            counts = {b:0}
+            counts = {b:0 for b in self.valid}
             for b in self.sequence:
                 if b in counts:
                     counts[b] += 1
             return counts
+    
     def gc_content(self):
         g = self.sequence.count("G")
         c = self.sequence.count("C")
