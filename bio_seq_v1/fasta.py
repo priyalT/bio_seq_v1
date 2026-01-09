@@ -1,4 +1,6 @@
 #defining our parser function
+from bio_seq_v1.stats import sequence
+
 def fasta_parser(filename):
     all_seq =[]
     current_id = None
@@ -14,7 +16,7 @@ def fasta_parser(filename):
 
             if line.startswith(">"): 
                 if current_id is not None: 
-                    all_seq.append({"id": current_id, "sequence": "".join(current_seq)}) 
+                    all_seq.append(sequence(current_id, "".join(current_seq))) 
                 current_id = line[1:] 
                 current_seq = [] 
             else:
@@ -23,6 +25,6 @@ def fasta_parser(filename):
                      current_seq.append(seq_line)
 
         if current_id is not None: 
-                    all_seq.append({"id": current_id, "sequence": "".join(current_seq)}) 
+                    all_seq.append(sequence(current_id, "".join(current_seq))) 
                     current_seq = []
     return all_seq            

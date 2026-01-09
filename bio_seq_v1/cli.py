@@ -1,31 +1,29 @@
 from tabulate import tabulate
 import argparse
 from fasta import fasta_parser
-from stats import print_sequence_lengths, base_count, gc_content, rev_complement
+from stats import sequence
 valid = "ACGTUNRYSWKMBDHV-."
 
 def print_sequence_lengths_formatted(sequences):
-    table = [[s['id'], len(s['sequence'])] for s in sequences]
+    table = [[s.id, s.print_sequence_lengths()] for s in sequences]
     print(tabulate(table, headers=["Sequence ID", "Length"], tablefmt="grid"))
 
 def print_gc_content_table(sequences):
-    gc_list = gc_content(sequences)
-    table = [[item["id"], f"{item['GC%']:.2f}%"] for item in gc_list]
+    table = [[s.id, f"{s.gc_content():.2f}%"] for s in sequences]
     print(tabulate(table, headers=["Sequence", "GC%"], tablefmt="grid"))
 
 def print_revcomp(sequences):
-    rev_list = rev_complement(sequences)
-    for item in rev_list:
-        print(f">{item['id']} reverse complement")
-        print(item["reverse complement"])
+    for s in sequences:
+        print(f">{s.id} reverse complement")
+        print(s.rev_complement())
         print("-" * 30)
 
 def print_base_count(sequences):
-    base_list = base_count(sequences)
-    bases_present = [b for b in valid if any(b in item for item in base_list)]
+    all_counts = [s.base_count() for s in sequences]
+    bases_present = [b for b in sequence.valid]
     table = []
-    for b in base_list:
-        row = [b["id"]] + [b.get(base, 0) for base in bases_present]
+    for counts, s in zip(all_counts, sequences):
+        row = [s.id] + [counts.get(b, 0) for b in bases_present]
         table.append(row)
     headers = ["Sequence"] + bases_present
     print(tabulate(table, headers=headers, tablefmt="grid"))
@@ -53,7 +51,8 @@ parser.add_argument("--basecount", "-b", help ="Compute total count for bases pe
 parser.add_argument("--summary", help="Print summary statistics", action="store_true")
 args = parser.parse_args()
 
-sequences = fasta_parser(args.file)
+seq_dict = fasta_parser(args.file)
+sequences = [sequence(d['id'], d['sequence']) for d in seq_dict]
 if not any([args.length, args.gc, args.revcomp, args.basecount, args.summary]):
     print_summary(sequences)
     exit()
