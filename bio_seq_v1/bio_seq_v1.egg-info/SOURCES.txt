@@ -1,9 +1,0 @@
-README.md
-pyproject.toml
-bio_seq_v1/bio_seq_v1.egg-info/PKG-INFO
-bio_seq_v1/bio_seq_v1.egg-info/SOURCES.txt
-bio_seq_v1/bio_seq_v1.egg-info/dependency_links.txt
-bio_seq_v1/bio_seq_v1.egg-info/entry_points.txt
-bio_seq_v1/bio_seq_v1.egg-info/requires.txt
-bio_seq_v1/bio_seq_v1.egg-info/top_level.txt
-tests/test_fasta_stats.py
