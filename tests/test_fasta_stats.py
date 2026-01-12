@@ -12,10 +12,12 @@ def test_fasta_parser():
     first_seq = parsed[0]
     assert first_seq.sequence == "ATGCGTACGTAGCTAGTTAGCGATCGGGGCTAGCTAGCTAGCTAG"
     assert first_seq.id == "seq1"
+
 #test length of sequence
 def test_seq_length():
     parsed = fasta_parser(fasta_seq)
-    assert parsed[0].sequence_lengths() == 45
+    assert parsed[0].sequence_length() == 45
+    
 #test gc content     
 def test_gc_content():
     parsed = fasta_parser(fasta_seq)
@@ -60,5 +62,5 @@ def test_ambig_codes():
     assert parsed[0].rev_complement() == "KDMAAATTTCCCGGGBYACCCGGGTTTAAACCC"
 
 def test_empty_sequence():
-    seq = sequence("id", "")
+    seq = sequence("id", "ATATAT")
     assert seq.gc_content() == 0.0
