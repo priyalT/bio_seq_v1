@@ -7,22 +7,29 @@ and parse FASTA-formatted files into sequence objects.
 
 from bio_seq_v1.stats import sequence
 from pathlib import Path
+from typing import Optional
+
 
 class FASTAParser():
-    def __init__(self, path: str | None = None, strict: bool = False):
+    def __init__(self, path: Optional[str] = None, strict: bool = False, strict_file: bool = False, strict_seq: bool = False):
         self.path = Path(path) if path else None
         self.sequences = []
         self.errors = []
         self.warnings = []
         self.strict = strict
-        if self.strict:
-            self._strict_validate()
+        self.strict_file = strict_file
+        self.strict_seq = strict_seq
+
+        if self.strict_file:
+            self._strict_file_validate()
 
     @classmethod
     def strict(cls, path: str):
         return cls(path, strict=True)
+    
+    
 
-    def _strict_validate(self):
+    def _strict_file_validate(self):
         if not self.path:
             raise ValueError("Strict mode requires a file path")
         if not self.path.exists():
@@ -33,11 +40,11 @@ class FASTAParser():
             raise ValueError(f"File is empty.")
         
     def _validate_sequence(self, line, linenum):
-        valid_chars = {"A","C","G","T","U","N","R","Y","S","W","K","M","B","D","H","V","-","."}
+        valid_chars = {"A","C","G","T","U","N","R","Y","S","W","K","M","B","D","H","V","-"}
         invalid_chars = set(line) - valid_chars
         if invalid_chars:
-            msg = f"Invalid characters at line {linenum}: {''.join(invalid_chars)}"
-            if self.strict:
+            msg = f"Invalid nucleotide at line {linenum}: {''.join(invalid_chars)}"
+            if self.strict_seq:
                 raise ValueError(msg)
             else:
                 self.errors.append(msg)
@@ -47,8 +54,9 @@ class FASTAParser():
             seq = []
             header = None
             for linenum, line in enumerate(lines, start =1):
-                line = line.strip()
-                if not line:
+                line = line.rstrip("\n")
+                if not line.strip():
+                    self.errors.append(f"Empty or whitespace-only sequence at line {linenum}")
                     continue
                 if line.startswith(">"):
                     if header is None and seq:
@@ -72,6 +80,12 @@ class FASTAParser():
                     seq.append(line)
             if seq:
                 self.sequences.append("".join(seq))
+            if not self.sequences:
+                msg = "No sequences found (empty or whitespace-only input)"
+                if self.strict:
+                    raise ValueError(msg)
+                else:
+                    self.errors.append(msg)
 
     def parse_file(self):
         if not self.path:
