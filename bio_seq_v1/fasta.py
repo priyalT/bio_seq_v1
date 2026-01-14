@@ -9,22 +9,22 @@ from bio_seq_v1.stats import sequence
 from pathlib import Path
 
 class FASTAParser():
-    def __init__(self, path: str, strict: bool = False):
-        self.path = Path(path)
+    def __init__(self, path: str | None = None, strict: bool = False):
+        self.path = Path(path) if path else None
         self.sequences = []
         self.errors = []
         self.warnings = []
         self.strict = strict
         if self.strict:
             self._strict_validate()
-        if self.path.exists():
-            self._parse()
 
     @classmethod
     def strict(cls, path: str):
         return cls(path, strict=True)
 
     def _strict_validate(self):
+        if not self.path:
+            raise ValueError("Strict mode requires a file path")
         if not self.path.exists():
             raise FileNotFoundError(f"{self.path} does not exist")
         if not self.path.is_file():
@@ -43,11 +43,10 @@ class FASTAParser():
                 self.errors.append(msg)
         
               
-    def _parse(self):
-        with self.path.open('r') as fasta:
+    def _parse_lines(self, lines):
             seq = []
             header = None
-            for linenum, line in enumerate(fasta, start =1):
+            for linenum, line in enumerate(lines, start =1):
                 line = line.strip()
                 if not line:
                     continue
@@ -71,5 +70,36 @@ class FASTAParser():
                             self.errors.append(msg)
                     self._validate_sequence(line, linenum)
                     seq.append(line)
-        if seq:
-            self.sequences.append("".join(seq))
+            if seq:
+                self.sequences.append("".join(seq))
+
+    def parse_file(self):
+        if not self.path:
+            raise ValueError("No file path provided")
+        with self.path.open("r") as f:
+            self._parse_lines(f)
+
+    def parse_string(self, fasta_str: str):
+        self._parse_lines(fasta_str.splitlines())   
+
+    def get_report(self):
+        lines =[]
+        if not self.errors and not self.warnings:
+            lines.append("Parser successful.")
+        elif self.errors:
+            lines.append("Parser failed with errors.")
+        else:
+            lines.append("Parser successful with warnings.")
+
+        lines.append(f"Sequences parsed: {len(self.sequences)}")
+
+        if self.errors:
+            lines.append("\nErrors: ")
+            for err in self.errors:
+                lines.append(f"-{err}")
+        if self.warnings:
+            lines.append("\nWarnings: ")
+            for war in self.warnings:
+                lines.append(f"-{war}")
+        return "\n".join(lines)
+        
