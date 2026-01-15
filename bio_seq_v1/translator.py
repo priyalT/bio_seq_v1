@@ -54,7 +54,8 @@ class Translator():
         self.start_codons = start_codons
         self.stop_codons = stop_codons
 
-    def translate(self, seq, frame):
+    def translate(self, seq_obj: sequence, frame):
+        seq = seq_obj.sequence
         protein = []
         for i in range(frame, len(seq), 3):
             codon = seq[i:i+3]
@@ -67,18 +68,15 @@ class Translator():
                 protein.append(self.genetic_code[codon])
         return "".join(protein)
     
-    def translate_six_frames(self, seq):
-        seq = seq.upper()
-        dna = sequence("tmp_id",seq)
-        reverse_complement_sequence = dna.rev_complement()
-        
+    def translate_six_frames(self, seq_obj: sequence):
         results = {}
 
         for i in range(3):
-            results[f"+{i+1}"] = self.translate(seq, i)
+            results[f"+{i+1}"] = self.translate(seq_obj, i)
 
+        rev = sequence(seq_obj.id, seq_obj.rev_complement())
         for i in range(3):
-            results[f"-{i+1}"] = self.translate(reverse_complement_sequence, i)
+            results[f"-{i+1}"] = self.translate(rev, i)
         
         return results
 
