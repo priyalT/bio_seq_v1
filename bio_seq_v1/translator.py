@@ -54,7 +54,15 @@ class Translator():
         self.start_codons = start_codons
         self.stop_codons = stop_codons
 
-    def translate(self, seq_obj: sequence, frame):
+    def _coerce_to_sequence(self, seq_input):
+        if isinstance(seq_input, sequence):
+            return seq_input
+        if isinstance(seq_input, str):
+            return sequence("anonymous", seq_input)
+        raise TypeError(f"Expected str or sequence, got {type(seq_input).__name__}")
+
+    def translate(self, seq_input, frame: int):
+        seq_obj = self._coerce_to_sequence(seq_input)
         seq = seq_obj.sequence
         protein = []
         for i in range(frame, len(seq), 3):
@@ -68,13 +76,14 @@ class Translator():
                 protein.append(self.genetic_code[codon])
         return "".join(protein)
     
-    def translate_six_frames(self, seq_obj: sequence):
+    def translate_six_frames(self, seq_input):
+        seq_object = self._coerce_to_sequence(seq_input)
         results = {}
 
         for i in range(3):
-            results[f"+{i+1}"] = self.translate(seq_obj, i)
+            results[f"+{i+1}"] = self.translate(seq_object, i)
 
-        rev = sequence(seq_obj.id, seq_obj.rev_complement())
+        rev = sequence(seq_object.id, seq_object.rev_complement())
         for i in range(3):
             results[f"-{i+1}"] = self.translate(rev, i)
         
