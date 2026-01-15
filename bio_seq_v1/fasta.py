@@ -26,8 +26,6 @@ class FASTAParser():
     @classmethod
     def strict(cls, path: str):
         return cls(path, strict=True)
-    
-    
 
     def _strict_file_validate(self):
         if not self.path:
@@ -54,7 +52,7 @@ class FASTAParser():
             seq = []
             header = None
             for linenum, line in enumerate(lines, start =1):
-                line = line.rstrip("\n")
+                line = line.strip()
                 if not line.strip():
                     self.errors.append(f"Empty or whitespace-only sequence at line {linenum}")
                     continue
@@ -66,7 +64,8 @@ class FASTAParser():
                         else:
                             self.errors.append(msg)
                     if header:
-                        self.sequences.append(("".join(seq)))
+
+                        self.sequences.append(sequence(header, "".join(seq)))
                     header = line[1:]
                     seq = []
                 else:
@@ -77,9 +76,9 @@ class FASTAParser():
                         else:
                             self.errors.append(msg)
                     self._validate_sequence(line, linenum)
-                    seq.append(line)
+                    seq.append(line.upper())
             if seq:
-                self.sequences.append("".join(seq))
+                self.sequences.append(sequence(header, "".join(seq)))
             if not self.sequences:
                 msg = "No sequences found (empty or whitespace-only input)"
                 if self.strict:

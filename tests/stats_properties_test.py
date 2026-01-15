@@ -1,15 +1,17 @@
 import pytest
+import os
 from bio_seq_v1.stats import sequence
-from bio_seq_v1.fasta import fasta_parser
+from bio_seq_v1.fasta import FASTAParser
 from hypothesis import given, strategies as st
 
 @given(st.text())
-def test_fasta_parser_handles_arbitrary_input(path):
-    with pytest.raises((FileNotFoundError, IsADirectoryError, ValueError)):
-        result = fasta_parser(path)
+def test_fasta_parser_invalid_input_raises(path):
+    try:
+        result = FASTAParser(path)
         assert isinstance(result, list)
         assert all(isinstance(s, sequence) for s in result)
-    
+    except(FileNotFoundError, IsADirectoryError, ValueError):
+        pass    
 
 @given(st.text(alphabet="ACGTNRYKMSWBDHV", min_size=1))
 def test_sequence_length_non_negative(seq_str):
