@@ -38,7 +38,7 @@ class FASTAParser():
             raise ValueError(f"File is empty.")
         
     def _validate_sequence(self, line, linenum):
-        valid_chars = {"A","C","G","T","U","N","R","Y","S","W","K","M","B","D","H","V","-"}
+        valid_chars = {"A","C","G","T","N","R","Y","S","W","K","M","B","D","H","V","-","."}
         invalid_chars = set(line) - valid_chars
         if invalid_chars:
             msg = f"Invalid nucleotide at line {linenum}: {''.join(invalid_chars)}"
@@ -78,7 +78,11 @@ class FASTAParser():
                     self._validate_sequence(line, linenum)
                     seq.append(line.upper())
             if seq:
-                self.sequences.append(sequence(header, "".join(seq)))
+                try:
+                    self.sequences.append(sequence(header, "".join(seq)))
+                except ValueError as e:
+                    self.errors.append(str(e))
+
             if not self.sequences:
                 msg = "No sequences found (empty or whitespace-only input)"
                 if self.strict:

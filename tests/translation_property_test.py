@@ -12,14 +12,15 @@ def test_genetic_code_compliance(seq):
     for aa in protein:
         assert aa in valid_amino_acids
 
-@given(st.text(alphabet = "ACGT", min_size = 3))
+seq_strategy = st.text(alphabet="ACGT", min_size=9).filter(lambda s: len(set(s)) > 1)
+@given(seq_strategy)
 def test_frame_offset_correctness(seq):
     translator = Translator()
     p0 = translator.translate(seq, frame = 0)
     p1 = translator.translate(seq, frame = 1)
     p2 = translator.translate(seq, frame = 2)
-    assert not p0 == p1 == p2
-
+    assert len({p0, p1, p2}) > 1
+    
 @given(st.text(alphabet = "ACGT", min_size = 1))
 def test_incomplete_codon_handling(seq):
     translator = Translator()

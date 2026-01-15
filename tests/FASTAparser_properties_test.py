@@ -10,7 +10,7 @@ def test_fasta_preserves_sequences(seq):
     parser = FASTAParser(strict=False)
     parser.parse_string(fasta)
     expected = list(seq)
-    assert parser.sequences == expected
+    assert [s.sequence for s in parser.sequences] == expected
 
 @given(st.text(alphabet=st.characters(blacklist_characters=">ACGTNRYKMSWBDHV\n"), min_size = 1))
 def test_fasta_file_rejection(fasta_str):

@@ -7,9 +7,11 @@ from hypothesis import given, strategies as st
 @given(st.text())
 def test_fasta_parser_invalid_input_raises(path):
     try:
-        result = FASTAParser(path)
-        assert isinstance(result, list)
-        assert all(isinstance(s, sequence) for s in result)
+        parser = FASTAParser(path)
+        if path:
+            parser.parse_file()
+        assert isinstance(parser.sequences, list)
+        assert all(isinstance(s, sequence) for s in parser.sequences)
     except(FileNotFoundError, IsADirectoryError, ValueError):
         pass    
 

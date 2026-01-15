@@ -2,7 +2,7 @@ import pytest
 from bio_seq_v1.stats import sequence
 from bio_seq_v1.fasta import FASTAParser
 fasta_seq = "/Users/priyaltripathi/bio_seq_v1/tests/data/tiny.fasta"
-single_seq = "tests/data/single.fasta"
+single_seq = "/Users/priyaltripathi/bio_seq_v1/tests/data/single.fasta"
 
 def test_fasta_parser():
     parser = FASTAParser(fasta_seq)
@@ -61,15 +61,17 @@ def test_single_base():
 def test_multiple_fasta_entries():
     parser = FASTAParser(fasta_seq)
     parser.parse_file()
-    assert len(parser) == 3
+    seq = parser.sequences
+    assert len(seq) == 3
 
 def test_single_fasta_entries():
-    parser = FASTAParser(fasta_seq)
+    parser = FASTAParser(single_seq)
     parser.parse_file()
-    assert len(parser) == 1
+    seq = parser.sequences
+    assert len(seq) == 1
 
 def test_ambig_codes():
-    parser = FASTAParser(fasta_seq)
+    parser = FASTAParser(single_seq)
     parser.parse_file()
     seq_obj = parser.sequences[0]
     assert seq_obj.rev_complement() == "KDMAAATTTCCCGGGBYACCCGGGTTTAAACCC"
