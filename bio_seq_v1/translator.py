@@ -88,5 +88,7 @@ class Translator():
             results[f"-{i+1}"] = self.translate(rev, i)
         
         return results
+    
+
 
         
