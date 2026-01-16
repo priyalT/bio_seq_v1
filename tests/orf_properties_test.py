@@ -6,4 +6,9 @@ from bio_seq_v1.orf import ORFDetector
 from hypothesis import given, strategies as st
 
 #ORF detection completeness
-@given(st.text(alphabet=""))
+@given(st.text(alphabet="ACGTNRYSWKMBDHV", min_size=3))
+def test_orf_detection_completeness(seq):
+    orf = ORFDetector(min_length=0)
+    detected_orfs = orf.find_orfs(seq)
+    frames = Translator().translate_six_frames(seq)
+    expected = 0
