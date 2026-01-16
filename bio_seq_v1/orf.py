@@ -22,15 +22,14 @@ class ORF():
 class ORFDetector():
     START_CODONS = {"ATG"}
     STOP_CODONS = {"TAA", "TAG", "TGA"}
+
     def __init__(self, min_length = 0):
         self.translator = Translator()
         self.min_length = min_length
 
     def find_orfs(self, seq):
-        translator = Translator()
         orfs = []
         frames = self.translator.translate_six_frames(seq)
-
         for frame_label, protein in frames.items():
             strand = frame_label[0]
             frame = int(frame_label[1]) - 1
@@ -54,11 +53,17 @@ class ORFDetector():
                 
                 aa_index += 1
         return orfs
-
-
-
-
-    def length_filter(seq):
-        pass
-    def overlapping_orf(seq):
-        pass
+        
+    def overlapping_orfs(self, orfs: list):
+        overlap = []
+        for i in range(len(orfs)):
+            orf1 = orfs[i]
+            for j in range(i+1, len(orfs)):
+                orf2 = orfs[j]
+                if orf1.strand != orf2.strand:
+                    continue
+                if orf1.start <= orf2.end and orf2.start <= orf1.end:
+                    overlap.append((orf1, orf2))
+        return overlap
+    
+            
