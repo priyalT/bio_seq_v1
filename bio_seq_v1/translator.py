@@ -62,6 +62,8 @@ class Translator():
         raise TypeError(f"Expected str or sequence, got {type(seq_input).__name__}")
 
     def translate(self, seq_input, frame: int):
+        if frame not in (0, 1, 2):
+            raise ValueError("Frame must be 0, 1, or 2")
         seq_obj = self._coerce_to_sequence(seq_input)
         seq = seq_obj.sequence
         protein = []
