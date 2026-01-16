@@ -2,6 +2,12 @@ from bio_seq_v1.translator import Translator
 
 class ORF():
     def __init__(self, start, end, frame, strand, protein):
+        if start < 0 or end < start:
+            raise ValueError("Invalid ORF coordinates")
+        if frame not in (0, 1, 2):
+            raise ValueError("Frame must be 0, 1 or 2")
+        if strand not in ("+", "-"):
+            raise ValueError ("Strand must be '+' or '-'")
         self.start= start
         self.end = end
         self.frame = frame
@@ -24,6 +30,8 @@ class ORFDetector():
     STOP_CODONS = {"TAA", "TAG", "TGA"}
 
     def __init__(self, min_length = 0):
+        if min_length < 0:
+            raise ValueError("min_length must be non-negative")
         self.translator = Translator()
         self.min_length = min_length
 
@@ -55,10 +63,17 @@ class ORFDetector():
         return orfs
         
     def overlapping_orfs(self, orfs: list):
+        if not isinstance(orfs, list):
+            raise TypeError("ORFs must be a list of ORF objects")
+        
         overlap = []
         for i in range(len(orfs)):
+            if not isinstance(orfs[i], ORF):
+                raise TypeError("List must contain only ORF objects")
             orf1 = orfs[i]
             for j in range(i+1, len(orfs)):
+                if not isinstance(orfs[j], ORF):
+                    raise TypeError("List must contain only ORF objects")
                 orf2 = orfs[j]
                 if orf1.strand != orf2.strand:
                     continue
