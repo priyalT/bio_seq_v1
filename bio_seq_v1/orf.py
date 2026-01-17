@@ -8,7 +8,7 @@ class ORF():
             raise ValueError("Frame must be 0, 1 or 2")
         if strand not in ("+", "-"):
             raise ValueError ("Strand must be '+' or '-'")
-        self.start= start
+        self.start = start
         self.end = end
         self.frame = frame
         self.strand = strand
