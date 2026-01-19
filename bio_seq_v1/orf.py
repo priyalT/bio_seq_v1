@@ -24,6 +24,16 @@ class ORF():
             'length': self.length,
             'protein': self.protein
         }
+    def __eq__(self, other):
+        if not isinstance(other, ORF):
+            return NotImplemented
+        return (
+            self.start == other.start and
+            self.end == other.end and
+            self.frame == other.frame and
+            self.strand == other.strand and
+            self.protein == other.protein
+        )
 
 class ORFDetector():
     START_CODONS = {"ATG"}
