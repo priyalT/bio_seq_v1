@@ -1,5 +1,5 @@
 from bio_seq_v1.stats import sequence
-
+from typing import List
 class Match():
     def __init__(self, seq_id, position, matched_seq, strand_attributes):
         self.seq_id = seq_id
@@ -42,7 +42,7 @@ class MotifFinder():
     def _validate_seq_string(self, seq: str):
         valid_bases = set().union(*self.IUPAC.values())
         if not set(seq).issubset(valid_bases):
-            raise ValueError(f"Invalid characters in sequence: {seq}")
+            raise ValueError("Invalid characters in sequence")
 
     def char_match(self, motif_char: str, base: str) -> bool:
         return base in self.IUPAC[motif_char]
@@ -66,6 +66,7 @@ class MotifFinder():
     def search_single(self, seq_obj: sequence, motif: str, max_mismatches: int):
         if len(motif) != self.k:
             raise ValueError("Motif length must match k")
+        motif = motif.upper()
         if not set(motif).issubset(self.IUPAC):
             raise ValueError(f"Invalid IUPAC character in motif: {motif}")
         seq = seq_obj.sequence.upper()
@@ -76,11 +77,11 @@ class MotifFinder():
         for kmer, pos in self.kmer_generation(seq):
             if self.mismatches(motif, kmer) <= max_mismatches:
                 matches.append(
-                    Match(seq_obj.id, pos, kmer)
+                    Match(seq_obj.id, pos, kmer, None)
                 )
         return matches
     
-    def search_fasta(self, fasta_sequences: list[sequence], motif: str, mismatches: int):
+    def search_fasta(self, fasta_sequences: List[sequence], motif: str, mismatches: int):
         all_matches = []
         for seq_obj in fasta_sequences:
             all_matches.extend(
