@@ -40,7 +40,7 @@ class MotifFinder():
         self.k = k
     
     def _validate_seq_string(self, seq: str):
-        valid_bases = set().union(*self.IUPAC.values())
+        valid_bases = set(self.IUPAC.keys())
         if not set(seq).issubset(valid_bases):
             raise ValueError("Invalid characters in sequence")
 
