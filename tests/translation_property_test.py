@@ -15,16 +15,15 @@ def test_genetic_code_compliance(seq):
     for aa in protein:
         assert aa in valid_amino_acids
 
-seq_strategy = st.text(alphabet="ACGT", min_size=9).filter(lambda s: len(set(s)) > 1)
-@given(seq_strategy)
-def test_frame_offset_correctness(seq):
+@given(st.text(alphabet="ACGT", min_size=6))
+def test_frame_translation_slicing(seq):
     parser = FASTAParser()
     parser.parse_string(seq)
     translator = Translator()
-    p0 = translator.translate(parser.sequences[0], frame = 0)
-    p1 = translator.translate(parser.sequences[0], frame = 1)
-    p2 = translator.translate(parser.sequences[0], frame = 2)
-    assert len({p0, p1, p2}) > 1
+
+    s = parser.sequences[0].sequence
+    assert translator.translate(s, frame=1) == translator.translate(s[1:], frame=0)
+    assert translator.translate(s, frame=2) == translator.translate(s[2:], frame=0)    
     
 @given(st.text(alphabet = "ACGT", min_size = 1))
 def test_incomplete_codon_handling(seq):
