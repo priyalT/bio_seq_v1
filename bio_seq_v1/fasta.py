@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Optional
 
 
-class FASTAParser():
+class FASTAParser:
     def __init__(self, path: Optional[str] = None, strict: bool = False, strict_file: bool = False, strict_seq: bool = False):
         self.path = Path(path) if path else None
         self.sequences = []
@@ -24,7 +24,7 @@ class FASTAParser():
             self._strict_file_validate()
 
     @classmethod
-    def strict(cls, path: str):
+    def strict_mode(cls, path: str):
         return cls(path, strict=True)
 
     def _strict_file_validate(self):
@@ -41,7 +41,7 @@ class FASTAParser():
         valid_chars = {"A","C","G","T","N","R","Y","S","W","K","M","B","D","H","V","-","."}
         invalid_chars = set(line) - valid_chars
         if invalid_chars:
-            msg = f"Invalid nucleotide at line {linenum}: {''.join(invalid_chars)}"
+            msg = f"Invalid character(s) in sequence at line {linenum}: {''.join(invalid_chars)}"
             if self.strict_seq:
                 raise ValueError(msg)
             else:
@@ -52,8 +52,10 @@ class FASTAParser():
             seq = []
             header = None
             for linenum, line in enumerate(lines, start =1):
+                if not line:
+                    continue
                 line = line.strip()
-                if not line.strip():
+                if not line():
                     self.errors.append(f"Empty or whitespace-only sequence at line {linenum}")
                     continue
                 if line.startswith(">"):
@@ -64,10 +66,15 @@ class FASTAParser():
                         else:
                             self.errors.append(msg)
                     if header:
-
                         self.sequences.append(sequence(header, "".join(seq)))
                     header = line[1:]
                     seq = []
+                    if header and not seq:
+                        msg = f"Header '{header}' has no sequence"
+                        if self.strict:
+                            raise ValueError(msg)
+                        else:
+                            self.errors.append(msg)
                 else:
                     if not header:
                         msg = f"Sequence line before any header at line {linenum}"
@@ -77,12 +84,14 @@ class FASTAParser():
                             self.errors.append(msg)
                     self._validate_sequence(line, linenum)
                     seq.append(line.upper())
+                
             if seq:
                 try:
                     self.sequences.append(sequence(header, "".join(seq)))
                 except ValueError as e:
                     self.errors.append(str(e))
-
+            elif seq and not header:
+                msg = "Sequence without header at end of file"
             if not self.sequences:
                 msg = "No sequences found (empty or whitespace-only input)"
                 if self.strict:
