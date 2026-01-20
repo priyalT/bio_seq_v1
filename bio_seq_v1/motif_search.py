@@ -15,7 +15,6 @@ class Match():
             'strand_attributes' : self.strand_attributes
 
         }
-    
 
 class MotifFinder():
     IUPAC = {
@@ -88,3 +87,23 @@ class MotifFinder():
                 self.search_single(seq_obj, motif, mismatches)
             )
         return all_matches
+    
+    def search_both_strands(self, seq_obj: sequence, motif: str, mismatches: int):
+        matches = []
+        for match in self.search_single(seq_obj, motif, mismatches):
+            match.strand_attributes = "+"
+            matches.append(match)
+
+
+        rev_seq = seq_obj.rev_complement()
+        rev_obj = sequence(seq_obj.id, rev_seq)
+        seq_len = len(seq_obj.sequence)
+        for match in self.search_single(rev_obj, motif, mismatches):
+            original_pos = seq_len - match.position - self.k
+            matches.append(
+                Match(seq_id = seq_obj.id,
+                      position= original_pos,
+                      matched_seq= match.matched_seq,
+                      strand_attributes="-")
+            )
+        return matches
