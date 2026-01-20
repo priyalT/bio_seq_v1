@@ -55,20 +55,22 @@ class ORFDetector():
             while aa_index < len(protein):
                 if protein[aa_index] == "M":
                     start_aa = aa_index
-                    aa_index += 1
+                    scan = aa_index + 1
 
-                    while aa_index < len(protein) and protein[aa_index] != "*":
-                        aa_index += 1
-                    
-                    if aa_index < len(protein):
-                        end_aa = aa_index - 1
+                    while scan < len(protein) and protein[scan] != "*":
+                        scan += 1
+
+                    if scan < len(protein):  # stop codon found
+                        end_aa = scan - 1
                         dna_start = frame + start_aa * 3
                         dna_end = frame + end_aa * 3 + 2
-                        prot_seq = protein[start_aa:aa_index]
+                        prot_seq = protein[start_aa:scan]
 
                         if len(prot_seq) * 3 >= self.min_length:
-                            orfs.append(ORF(dna_start, dna_end, frame, strand, prot_seq))
-                
+                            orfs.append(
+                                ORF(dna_start, dna_end, frame, strand, prot_seq)
+                            )
+
                 aa_index += 1
         return orfs
         
