@@ -1,3 +1,5 @@
+from bio_seq_v1.stats import sequence
+
 class Match():
     def __init__(self, seq_id, position, matched_seq, strand_attributes):
         self.seq_id = seq_id
@@ -14,7 +16,6 @@ class Match():
 
         }
     
-
 
 class MotifFinder():
     IUPAC = {
@@ -34,56 +35,56 @@ class MotifFinder():
         'V': {'A', 'C', 'G'},
         'N': {'A', 'C', 'G', 'T'}
     }
-    def __init__(self, dna: list[str], k: int):
-        if not dna:
-            raise ValueError("DNA list cannot be empty")
+    def __init__(self, k: int):
         if k <= 0:
             raise ValueError("Motif length must be positive")
-        self.dna = dna
         self.k = k
-        if not all(isinstance(seq, str) for seq in dna):
-            raise TypeError("All DNA sequences must be strings")
-        self._validate_sequences()
-
-    def _convert_iupac_to_regex (self, motif: str):
-        motif = motif.upper()
-        regex_parts = []
-        for char in motif:
-            if char not in self.IUPAC:
-                raise ValueError(f"Invalid IUPAC code: {char}")
-            bases = self.IUPAC[char]
-            if len(bases) == 1:
-                regex_parts.append(next(iter(bases)))
-            else:
-                regex_parts.append(f"[{''.join(sorted(bases))}]")
-        return "".join(regex_parts)
     
-    def _validate_sequences(self):
-        valid = set(self.IUPAC.keys())
-        for seq in self.dna:
-            if not set(seq).issubset(valid):
-                raise ValueError(f"Invalid character in sequence: {seq}")
-            
+    def _validate_seq_string(self, seq: str):
+        valid_bases = set().union(*self.IUPAC.values())
+        if not set(seq).issubset(valid_bases):
+            raise ValueError(f"Invalid characters in sequence: {seq}")
+
     def char_match(self, motif_char: str, base: str) -> bool:
         return base in self.IUPAC[motif_char]
 
     def mismatches(self, motif: str, kmer: str) -> int:
         if len(motif) != len(kmer):
             raise ValueError("Motif and k-mer must be of the same length")
-        
         mismatches = 0
         for m,b in zip(motif, kmer):
             if not self.char_match(m,b):
                 mismatches += 1
         return mismatches
+
+    def kmer_generation(self, seq: str):
+        k = self.k
+        kmers = []
+        for base in range(len(seq) - k + 1):
+            kmers.append((seq[base:base+k], base))
+        return kmers
+
+    def search_single(self, seq_obj: sequence, motif: str, max_mismatches: int):
+        if len(motif) != self.k:
+            raise ValueError("Motif length must match k")
+        if not set(motif).issubset(self.IUPAC):
+            raise ValueError(f"Invalid IUPAC character in motif: {motif}")
+        seq = seq_obj.sequence.upper()
+        motif = motif.upper()
+        self._validate_seq_string(seq)
+
+        matches = []
+        for kmer, pos in self.kmer_generation(seq):
+            if self.mismatches(motif, kmer) <= max_mismatches:
+                matches.append(
+                    Match(seq_obj.id, pos, kmer)
+                )
+        return matches
     
-    def kmer_generation(self, seq :str) -> list[str]:
-        return [
-
-        ]
-    
-
-
-        
-
-    
+    def search_fasta(self, fasta_sequences: list[sequence], motif: str, mismatches: int):
+        all_matches = []
+        for seq_obj in fasta_sequences:
+            all_matches.extend(
+                self.search_single(seq_obj, motif, mismatches)
+            )
+        return all_matches
