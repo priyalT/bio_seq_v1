@@ -15,7 +15,6 @@ class FASTAParser:
         self.path = Path(path) if path else None
         self.sequences = []
         self.errors = []
-        self.warnings = []
         self.strict = strict
         self.strict_file = strict_file
         self.strict_seq = strict_seq
@@ -104,6 +103,7 @@ class FASTAParser:
             raise ValueError("No file path provided")
         with self.path.open("r") as f:
             self._parse_lines(f)
+        
 
     def parse_string(self, fasta_str: str):
         self._parse_lines(fasta_str.splitlines())   
