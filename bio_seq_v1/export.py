@@ -4,21 +4,36 @@ from bio_seq_v1.stats import sequence
 from bio_seq_v1.translator import Translator
 from bio_seq_v1.orf import ORFDetector, ORF
 from bio_seq_v1.motif_search import MotifFinder, Match
+import csv
+import io
+import json
 
 class Exporter:
-    def __init__(self, path):
-        if path:
-            self.path = Path(path) 
-        else:
-            self.path = Path(".")
+
+    @staticmethod
+    def sequences_to_csv(sequence) -> str:
+        if not sequence:
+            return ""
+        fieldnames = ["id", "length", "gc_content", "A", "C", "G", "T", "reverse complement"]
+        buffer = io.StringIO()
+        writer = csv.DictWriter(buffer, fieldnames=fieldnames)
+        writer.writeheader()
+
+        for seq in sequence:
+            base = seq.base_count()
+            writer.writerow({
+                "id": seq.id,
+                "length": seq.sequence_length(),
+                "gc_content": seq.gc_content(),
+                "A": base.get("A", 0),
+                "C": base.get("C", 0),
+                "G": base.get("G", 0),
+                "T": base.get("T", 0),
+            })
+        return buffer.getvalue()
     
-    def to_csv(self, path_or_buf=None, *, 
-               sep=',', na_rep='', float_format=None, 
-               columns=None, header=True, index=True, 
-               index_label=None, mode='w', encoding=None, 
-               compression='infer', quoting=None, quotechar='"', 
-               lineterminator=None, chunksize=None, date_format=None, 
-               doublequote=True, escapechar=None, decimal='.', errors='strict', 
-               storage_options=None):
-        parser = FASTAParser()
+    @staticmethod
+    def 
+
+        
     
