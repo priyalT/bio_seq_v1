@@ -33,7 +33,16 @@ class Exporter:
         return buffer.getvalue()
     
     @staticmethod
-    def 
+    def translator_to_csv(translated_protein) -> str:
+        if not translated_protein:
+            return ""
+        fieldnames = ["id", "translated protein"]
+        buffer = io.StringIO()
+        writer = csv.DictWriter(buffer, fieldnames=fieldnames)
+        writer.writeheader()
+
+
+        
 
         
     
