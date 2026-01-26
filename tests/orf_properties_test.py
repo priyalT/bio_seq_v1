@@ -1,3 +1,4 @@
+import pytest
 from hypothesis import given, strategies as st
 from bio_seq_v1.translator import Translator
 from bio_seq_v1.orf import ORFDetector
