@@ -36,16 +36,11 @@ class FASTAParser:
         if self.path.stat().st_size == 0:
             raise ValueError(f"File is empty.")
         
-    def _validate_sequence(self, line, linenum):
-        valid_chars = {"A","C","G","T","N","R","Y","S","W","K","M","B","D","H","V","-","."}
-        invalid_chars = set(line) - valid_chars
-        if invalid_chars:
-            msg = f"Invalid character(s) in sequence at line {linenum}: {''.join(invalid_chars)}"
-            if self.strict_seq:
-                raise ValueError(msg)
-            else:
-                self.errors.append(msg)
-        
+    def _validate_sequence(self, seq, linenum):
+        valid = set("ACGTNRYKMSWBDHV")
+        for ch in seq.upper():
+            if ch not in valid:
+                raise ValueError(f"invalid character '{ch}'")        
               
     def _parse_lines(self, lines):
             seq = []
@@ -54,7 +49,7 @@ class FASTAParser:
                 if not line:
                     continue
                 line = line.strip()
-                if not line():
+                if not line:
                     self.errors.append(f"Empty or whitespace-only sequence at line {linenum}")
                     continue
                 if line.startswith(">"):
@@ -74,16 +69,32 @@ class FASTAParser:
                             raise ValueError(msg)
                         else:
                             self.errors.append(msg)
-                else:
-                    if not header:
-                        msg = f"Sequence line before any header at line {linenum}"
-                        if self.strict:
-                            raise ValueError(msg)
-                        else:
-                            self.errors.append(msg)
-                    self._validate_sequence(line, linenum)
-                    seq.append(line.upper())
-                
+                    else:
+                        if not header:
+                            msg = f"Sequence line before any header at line {linenum}"
+                            if self.strict:
+                                raise ValueError(msg)
+                            else:
+                                self.errors.append(msg)
+                            continue
+
+                        # Empty / whitespace-only line (after strip)
+                        if not line:
+                            self.errors.append(f"Empty or whitespace-only sequence at line {linenum}")
+                            continue
+
+                        try:
+                            self._validate_sequence(line, linenum)
+                        except ValueError as e:
+                            # Ensure error message contains line number and 'invalid'
+                            msg = f"Invalid sequence character at line {linenum}: {e}"
+                            if self.strict:
+                                raise ValueError(msg)
+                            else:
+                                self.errors.append(msg)
+                            continue
+
+                        seq.append(line.upper())                
             if seq:
                 try:
                     self.sequences.append(sequence(header, "".join(seq)))
