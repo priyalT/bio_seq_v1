@@ -66,7 +66,7 @@ class FASTAParser:
             if line.startswith(">"):
                 if header is not None:
                     if not seq:
-                        msg = f"Header '{header}' has no sequence"
+                        msg = f"Header '{header}' has no sequence at line {linenum}"
                         if self.strict or self.strict_seq:
                             raise ValueError(msg)
                         self.errors.append(msg)
