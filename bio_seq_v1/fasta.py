@@ -37,7 +37,7 @@ class FASTAParser:
             raise ValueError("File is empty")
 
     def _validate_sequence(self, line: str, linenum: int):
-        valid = set("ACGTNRYKMSWBDHV-.")
+        valid = set("ACGTUNRYSWKMBDHV-.")
         invalid = set(line) - valid
         if invalid:
             msg = f"Invalid character(s) at line {linenum}: {''.join(sorted(invalid))}"
@@ -89,15 +89,14 @@ class FASTAParser:
                         raise ValueError(msg)
                     self.errors.append(msg)
                     continue
-                else:
-                    try:
-                        self._validate_sequence(line, linenum)
-                    except ValueError as e:
-                        if self.strict or self.strict_seq:
-                            raise
-                        self.errors.append(str(e))
-                        continue
 
+                try:
+                    self._validate_sequence(line.upper(), linenum)
+                except ValueError as e:
+                    if self.strict or self.strict_seq:
+                        raise
+                    self.errors.append(str(e))
+                    continue
                 seq.append(line.upper())
 
         if header is not None:
