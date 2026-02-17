@@ -38,7 +38,7 @@ class FASTAParser:
 
     def _validate_sequence(self, line: str, linenum: int):
         valid = set("ACGTNRYKMSWBDHV-.")
-        invalid = set(line.upper()) - valid
+        invalid = set(line) - valid
         if invalid:
             msg = f"Invalid character(s) at line {linenum}: {''.join(sorted(invalid))}"
             raise ValueError(msg)
@@ -89,14 +89,14 @@ class FASTAParser:
                         raise ValueError(msg)
                     self.errors.append(msg)
                     continue
-                
-                try:
-                    self._validate_sequence(line, linenum)
-                except ValueError as e:
-                    if self.strict or self.strict_seq:
-                        raise
-                    self.errors.append(str(e))
-                    continue
+                else:
+                    try:
+                        self._validate_sequence(line, linenum)
+                    except ValueError as e:
+                        if self.strict or self.strict_seq:
+                            raise
+                        self.errors.append(str(e))
+                        continue
 
                 seq.append(line.upper())
 
