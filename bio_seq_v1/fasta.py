@@ -38,6 +38,9 @@ class FASTAParser:
 
     def _validate_sequence(self, line: str, linenum: int):
         valid = set("ACGTUNRYSWKMBDHV-.")
+        if not line.isascii():
+            msg = f"Invalid character(s) at line {linenum}: {line}"
+            raise ValueError(msg)
         invalid = set(line) - valid
         if invalid:
             msg = f"Invalid character(s) at line {linenum}: {''.join(sorted(invalid))}"
@@ -91,7 +94,7 @@ class FASTAParser:
                     continue
 
                 try:
-                    self._validate_sequence(line.upper(), linenum)
+                    self._validate_sequence(line, linenum)
                 except ValueError as e:
                     if self.strict or self.strict_seq:
                         raise
@@ -101,7 +104,7 @@ class FASTAParser:
 
         if header is not None:
             if not seq:
-                msg = f"Header '{header}' has no sequence at end of file"
+                msg = f"Header '{header}' has no sequence at line {linenum}"
                 if self.strict or self.strict_seq:
                     raise ValueError(msg)
                 self.errors.append(msg)
