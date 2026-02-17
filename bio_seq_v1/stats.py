@@ -14,7 +14,7 @@ class sequence():
     "A":"T", "T":"A", "G":"C", "C":"G", "U":"A",
     "R":"Y", "Y":"R", "S":"S", "W":"W",
     "K":"M", "M":"K", "B":"V", "D":"H",
-    "H":"D", "V":"B", "N":"N"}
+    "H":"D", "V":"B", "N":"N", "-": "-", ".": "."}
     
     valid = "ACGTUNRYSWKMBDHV-." 
 
@@ -84,7 +84,7 @@ class sequence():
         return ((g+c)/total)*100 
     
     def rev_complement(self):
-            """
+        """
         Compute the reverse complement of the sequence.
 
         Returns:
@@ -93,9 +93,11 @@ class sequence():
         Raises:
             ValueError: If the sequence contains invalid bases not in revcomp_dict.
         """
-
-            reverse = self.sequence[::-1] 
-            complement = "".join(self.revcomp_dict[b] for b in reverse if b in self.valid )
-            return complement
+        reverse = self.sequence[::-1]
+        try:
+            complement = "".join(self.revcomp_dict[b] for b in reverse)
+        except KeyError as e:
+             raise ValueError(f"Invalid base for reverse complement: {e.args[0]}")
+        return complement
 
 
