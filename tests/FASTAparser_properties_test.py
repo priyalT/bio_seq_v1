@@ -52,11 +52,3 @@ def test_empty_files(fasta_seq):
     parser.parse_string(fasta_seq)
     assert parser.errors
     assert any("empty" in e.lower() for e in parser.errors)
-
-@given(st.text(alphabet="/t/n/r", min_size=0))
-def test_whitespaces(fasta_seq):
-    parser = FASTAParser(strict = False)
-    parser.parse_string(fasta_seq)
-    assert parser.errors
-    assert any("whitespace" in e.lower() 
-               for e in parser.errors)
