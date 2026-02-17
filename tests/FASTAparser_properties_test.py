@@ -24,7 +24,7 @@ def test_invalid_fasta_records_errors(fasta_str):
     parser.parse_string(fasta_str)
     assert parser.errors
 
-blacklist_chars = "ACGTNRYKMSWBDHV<.-"
+blacklist_chars = "ACGUTNRYKMSWBDHV<.-"
 blacklist_chars_lower = blacklist_chars.lower()
 blacklist = blacklist_chars + blacklist_chars_lower
 @given(st.text(alphabet=st.characters(blacklist_characters=blacklist), min_size = 1))
