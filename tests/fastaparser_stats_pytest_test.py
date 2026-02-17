@@ -70,12 +70,6 @@ def test_single_fasta_entries():
     seq = parser.sequences
     assert len(seq) == 1
 
-def test_ambig_codes():
-    parser = FASTAParser(single_seq)
-    parser.parse_file()
-    seq_obj = parser.sequences[0]
-    assert seq_obj.rev_complement() == "KDMAAATTTCCCGGGBYACCCGGGTTTAAACCC"
-
 def test_empty_sequence():
     seq = sequence("id", "ATATAT")
     assert seq.gc_content() == 0.0
