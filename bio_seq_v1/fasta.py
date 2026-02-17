@@ -1,20 +1,20 @@
-"""
-FASTA file parsing and input validation utilities.
-
-This module provides helper functions to validate FASTA file paths
-and parse FASTA-formatted files into sequence objects.
-"""
-
 from bio_seq_v1.stats import sequence
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Iterable
 
 
 class FASTAParser:
-    def __init__(self, path: Optional[str] = None, strict: bool = False, strict_file: bool = False, strict_seq: bool = False):
+    def __init__(
+        self,
+        path: Optional[str] = None,
+        strict: bool = False,
+        strict_file: bool = False,
+        strict_seq: bool = False,
+    ):
         self.path = Path(path) if path else None
         self.sequences = []
         self.errors = []
+        self.warnings = []
         self.strict = strict
         self.strict_file = strict_file
         self.strict_seq = strict_seq
@@ -24,7 +24,7 @@ class FASTAParser:
 
     @classmethod
     def strict_mode(cls, path: str):
-        return cls(path, strict=True)
+        return cls(path=path, strict=True, strict_file=True, strict_seq=True)
 
     def _strict_file_validate(self):
         if not self.path:
@@ -34,93 +34,99 @@ class FASTAParser:
         if not self.path.is_file():
             raise IsADirectoryError(f"{self.path} is a directory")
         if self.path.stat().st_size == 0:
-            raise ValueError(f"File is empty.")
+            raise ValueError("File is empty")
+
+    def _validate_sequence(self, line: str, linenum: int):
+        valid = set("ACGTNRYKMSWBDHV-.")
+        invalid = set(line.upper()) - valid
+        if invalid:
+            msg = f"Invalid character(s) at line {linenum}: {''.join(sorted(invalid))}"
+            raise ValueError(msg)
         
-    def _validate_sequence(self, seq, linenum):
-        valid = set("ACGTNRYKMSWBDHV")
-        for ch in seq.upper():
-            if ch not in valid:
-                raise ValueError(f"invalid character '{ch}'")        
-              
-    def _parse_lines(self, lines):
-            seq = []
-            header = None
-            for linenum, line in enumerate(lines, start =1):
-                if not line:
-                    continue
-                line = line.strip()
-                if not line:
-                    self.errors.append(f"Empty or whitespace-only sequence at line {linenum}")
-                    continue
-                if line.startswith(">"):
-                    if header is None and seq:
-                        msg = f"Sequence found before header at line {linenum}: {seq}"
-                        if self.strict:
-                            raise ValueError(msg)
-                        else:
-                            self.errors.append(msg)
-                    if header:
-                        self.sequences.append(sequence(header, "".join(seq)))
-                    header = line[1:]
-                    seq = []
-                    if header and not seq:
-                        msg = f"Header '{header}' has no sequence"
-                        if self.strict:
-                            raise ValueError(msg)
-                        else:
-                            self.errors.append(msg)
-                    else:
-                        if not header:
-                            msg = f"Sequence line before any header at line {linenum}"
-                            if self.strict:
-                                raise ValueError(msg)
-                            else:
-                                self.errors.append(msg)
-                            continue
 
-                        # Empty / whitespace-only line (after strip)
-                        if not line:
-                            self.errors.append(f"Empty or whitespace-only sequence at line {linenum}")
-                            continue
+    def _parse_lines(self, lines: Iterable[str]):
+        seq = []
+        header = None
 
-                        try:
-                            self._validate_sequence(line, linenum)
-                        except ValueError as e:
-                            # Ensure error message contains line number and 'invalid'
-                            msg = f"Invalid sequence character at line {linenum}: {e}"
-                            if self.strict:
-                                raise ValueError(msg)
-                            else:
-                                self.errors.append(msg)
-                            continue
+        for linenum, raw in enumerate(lines, start=1):
+            line = raw.strip()
 
-                        seq.append(line.upper())                
-            if seq:
-                try:
-                    self.sequences.append(sequence(header, "".join(seq)))
-                except ValueError as e:
-                    self.errors.append(str(e))
-            elif seq and not header:
-                msg = "Sequence without header at end of file"
-            if not self.sequences:
-                msg = "No sequences found (empty or whitespace-only input)"
-                if self.strict:
-                    raise ValueError(msg)
-                else:
+            if not line:
+                if header is not None:
+                    msg = f"Empty or whitespace-only sequence line at line {linenum}"
+                    if self.strict or self.strict_seq:
+                        raise ValueError(msg)
                     self.errors.append(msg)
+                else:
+                    self.warnings.append(
+                        f"Empty or whitespace-only line ignored at line {linenum}"
+                    )
+                continue
+
+            if line.startswith(">"):
+                if header is not None:
+                    if not seq:
+                        msg = f"Header '{header}' has no sequence"
+                        if self.strict or self.strict_seq:
+                            raise ValueError(msg)
+                        self.errors.append(msg)
+                    else:
+                        self.sequences.append(sequence(header, "".join(seq)))
+
+                header = line[1:].strip()
+                seq = []
+
+                if not header:
+                    msg = f"Empty FASTA header at line {linenum}"
+                    if self.strict:
+                        raise ValueError(msg)
+                    self.errors.append(msg)
+
+            else:
+                if header is None:
+                    msg = f"Sequence line before any header at line {linenum}"
+                    if self.strict:
+                        raise ValueError(msg)
+                    self.errors.append(msg)
+                    continue
+                
+                try:
+                    self._validate_sequence(line, linenum)
+                except ValueError as e:
+                    if self.strict or self.strict_seq:
+                        raise
+                    self.errors.append(str(e))
+                    continue
+
+                seq.append(line.upper())
+
+        if header is not None:
+            if not seq:
+                msg = f"Header '{header}' has no sequence at end of file"
+                if self.strict or self.strict_seq:
+                    raise ValueError(msg)
+                self.errors.append(msg)
+            else:
+                self.sequences.append(sequence(header, "".join(seq)))
+
+        if not self.sequences:
+            msg = "No sequences found (empty or invalid input)"
+            if self.strict:
+                raise ValueError(msg)
+            self.errors.append(msg)
 
     def parse_file(self):
         if not self.path:
             raise ValueError("No file path provided")
         with self.path.open("r") as f:
             self._parse_lines(f)
-        
 
     def parse_string(self, fasta_str: str):
-        self._parse_lines(fasta_str.splitlines())   
+        self._parse_lines(fasta_str.splitlines())
 
     def get_report(self):
-        lines =[]
+        lines = []
+
         if not self.errors and not self.warnings:
             lines.append("Parser successful.")
         elif self.errors:
@@ -131,12 +137,13 @@ class FASTAParser:
         lines.append(f"Sequences parsed: {len(self.sequences)}")
 
         if self.errors:
-            lines.append("\nErrors: ")
+            lines.append("\nErrors:")
             for err in self.errors:
-                lines.append(f"-{err}")
+                lines.append(f"- {err}")
+
         if self.warnings:
-            lines.append("\nWarnings: ")
+            lines.append("\nWarnings:")
             for war in self.warnings:
-                lines.append(f"-{war}")
+                lines.append(f"- {war}")
+
         return "\n".join(lines)
-        

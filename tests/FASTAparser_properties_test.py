@@ -24,26 +24,28 @@ def test_invalid_fasta_records_errors(fasta_str):
     parser.parse_string(fasta_str)
     assert parser.errors
 
-@given(st.text(alphabet=st.characters(blacklist_characters="ACGTNRYKMSWBDHV>.-"), min_size = 1))
+blacklist_chars = "ACGTNRYKMSWBDHV<.-"
+blacklist_chars_lower = blacklist_chars.lower()
+blacklist = blacklist_chars + blacklist_chars_lower
+@given(st.text(alphabet=st.characters(blacklist_characters=blacklist), min_size = 1))
 def test_invalid_nucleotide(fasta_seq):
     fasta = f">seq1\n{fasta_seq}"
     parser = FASTAParser(strict_seq=False)
     parser.parse_string(fasta)
     assert any(
-        "invalid nucleotide" in e.lower() or "whitespace" in e.lower() or "empty" in e.lower()
+        "invalid" in e.lower() or "whitespace" in e.lower() or "empty" in e.lower()
         for e in parser.errors
     )
 
-@given(st.text(alphabet=st.characters(blacklist_characters="ACGTNRYKMSWBDHV>.-"), min_size = 1))
+@given(st.text(alphabet=st.characters(blacklist_characters=blacklist), min_size = 1))
 def test_line_reporting(fasta_seq):
     fasta = f">seq1\n{fasta_seq}"
     parser = FASTAParser(strict_seq=False)
     parser.parse_string(fasta)
-    assert parser.errors
     assert any(
-        ("invalid" in e.lower() or "whitespace" in e.lower() or "empty" in e.lower()) and "line 2" in e.lower()
-        for e in parser.errors
-    )
+        ("invalid" in e.lower() or "whitespace" in e.lower() or "empty" in e.lower() or "no sequence" in e.lower()) and "line 2" in e.lower()
+        for e in parser.errors)
+
 @given(st.text(alphabet=" ", min_size = 0))
 def test_empty_files(fasta_seq):
     parser = FASTAParser(strict = False)
@@ -51,9 +53,10 @@ def test_empty_files(fasta_seq):
     assert parser.errors
     assert any("empty" in e.lower() for e in parser.errors)
 
-@given(st.text(alphabet=" \t\n\r", min_size=0))
+@given(st.text(alphabet="/t/n/r", min_size=0))
 def test_whitespaces(fasta_seq):
     parser = FASTAParser(strict = False)
     parser.parse_string(fasta_seq)
     assert parser.errors
-    assert any("whitespace" in e.lower() for e in parser.errors)
+    assert any("whitespace" in e.lower() 
+               for e in parser.errors)

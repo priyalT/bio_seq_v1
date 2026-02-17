@@ -29,6 +29,7 @@ class sequence():
         Raises:
             ValueError: If the sequence is empty or contains invalid characters.
         """
+        
         if not sequence: 
              raise ValueError(f"Sequence for ID '{id}' is empty")
         invalid_chars = set(sequence.upper())-set(self.valid) 
