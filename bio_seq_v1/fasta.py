@@ -124,7 +124,10 @@ class FASTAParser:
             self._parse_lines(f)
 
     def parse_string(self, fasta_str: str):
-        self._parse_lines(fasta_str.splitlines())
+        lines = fasta_str.splitlines()
+        if not any(line.strip().startswith(">") for line in lines):
+            lines = [">anonymous"] + lines
+        self._parse_lines(lines)
 
     def get_report(self):
         lines = []
