@@ -1,4 +1,5 @@
 from bio_seq_v1.translator import Translator
+from bio_seq_v1.stats import sequence
 
 class ORF():
     def __init__(self, seq_id, start, end, frame, strand, protein):
@@ -51,6 +52,7 @@ class ORFDetector():
     def find_orfs(self, seq):
         orfs = []
         frames = self.translator.translate_six_frames(seq)
+        seq = sequence(seq[0], seq[1])
         seq_id = seq.id
         seq_len = len(seq.sequence)
         for frame_label, protein in frames.items():
@@ -76,7 +78,9 @@ class ORFDetector():
                             rc_end = dna_end
                             dna_start = seq_len - rc_end - 1
                             dna_end = seq_len - rc_start - 1
-
+                        if dna_start < 0 or dna_end < dna_start or dna_end >= seq_len:
+                            aa_index += 1
+                            continue
 
                         if len(prot_seq) * 3 >= self.min_length:
                             orfs.append(
