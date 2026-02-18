@@ -19,7 +19,6 @@ class ORF():
 
     def to_dict(self):
         return {
-            'seq_id': self.seq_id,
             'start': self.start,
             'end': self.end,
             'frame': self.frame,
@@ -51,10 +50,18 @@ class ORFDetector():
 
     def find_orfs(self, seq):
         orfs = []
-        frames = self.translator.translate_six_frames(seq)
-        seq = sequence(seq[0], seq[1])
-        seq_id = seq.id
-        seq_len = len(seq.sequence)
+        if isinstance(seq, str):
+            dna_string = seq
+            seq_id = "unknown"
+            seq_len = len(seq)
+        else:
+            seq_obj = sequence(seq[0], seq[1])
+            dna_string = seq_obj.sequence
+            seq_id = seq_obj.id
+            seq_len = len(seq_obj.sequence)
+
+        frames = self.translator.translate_six_frames(dna_string)
+
         for frame_label, protein in frames.items():
             strand = frame_label[0]
             frame = int(frame_label[1]) - 1
@@ -67,17 +74,18 @@ class ORFDetector():
                     while scan < len(protein) and protein[scan] != "*":
                         scan += 1
 
-                    if scan < len(protein):  
+                    if scan < len(protein):
                         end_aa = scan - 1
                         dna_start = frame + start_aa * 3
                         dna_end = frame + end_aa * 3 + 2
                         prot_seq = protein[start_aa:scan]
-                        
+
                         if strand == "-":
                             rc_start = dna_start
                             rc_end = dna_end
                             dna_start = seq_len - rc_end - 1
                             dna_end = seq_len - rc_start - 1
+
                         if dna_start < 0 or dna_end < dna_start or dna_end >= seq_len:
                             aa_index += 1
                             continue
