@@ -12,13 +12,13 @@ def test_fasta_preserves_sequences(seq):
     expected = list(seq)
     assert [s.sequence for s in parser.sequences] == expected
 
-@given(st.text(alphabet=st.characters(blacklist_characters=">ACGTNRYKMSWBDHV\n"), min_size = 1))
+@given(st.text(alphabet=st.characters(blacklist_characters=">ACGTNRUYKMSWBDHV\n.-"), min_size = 1))
 def test_fasta_file_rejection(fasta_str):
     parser = FASTAParser(strict = True)
     with pytest.raises(ValueError):
         parser.parse_string(fasta_str)
 
-@given(st.text(alphabet=st.characters(blacklist_characters=">ACGTNRYKMSWBDHV\n"), min_size = 1))
+@given(st.text(alphabet=st.characters(blacklist_characters=">ACGTNRUYKMSWBDHV\n.-"), min_size = 1))
 def test_invalid_fasta_records_errors(fasta_str):
     parser = FASTAParser(strict = False)
     parser.parse_string(fasta_str)
