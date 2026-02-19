@@ -9,7 +9,7 @@ class Exporter:
     @staticmethod
     def _write_or_print(content: str, file_path = None):
         if file_path:
-            Path(file_path).parent.mkdir(parents=True, file_path=None)
+            Path(file_path).parent.mkdir(parents=True, exist_ok=True)
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
         else:
@@ -20,14 +20,22 @@ class Exporter:
         if not data:
             Exporter._write_or_print("", file_path)
             return
+
+        if isinstance(data[0], dict) and 'fieldnames' in data[0]:
+            fieldnames = data[0]['fieldnames']
+            rows = data[1:]
+        else:
+            fieldnames = list(data[0].keys()) 
+            rows = data
+
         buffer = io.StringIO()
         writer = csv.DictWriter(
             buffer,
-            fieldnames=data[0].keys,
+            fieldnames=fieldnames,
             delimiter=delimiter
         )
         writer.writeheader()
-        writer.writerows(data)
+        writer.writerows(rows)
         Exporter._write_or_print(buffer.getvalue(), file_path)
 
     @staticmethod
