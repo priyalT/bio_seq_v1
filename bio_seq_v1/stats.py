@@ -1,4 +1,5 @@
 import warnings
+from bio_seq_v1.export import Exporter
 
 class sequence():
     """
@@ -37,7 +38,11 @@ class sequence():
              raise ValueError(f"Sequence '{id}' contains invalid characters: {invalid_chars}")
         self.id = id 
         self.sequence = sequence.upper()
-             
+
+    def __getitem__(self, index):
+         return self.sequence[index]
+    
+
     def sequence_length(self): 
         """
         Return the length of the sequence.
@@ -101,3 +106,7 @@ class sequence():
         return complement
 
 
+    def export_stats_to_csv(sequences, filepath):
+         exporter = Exporter()
+         
+         
