@@ -20,13 +20,7 @@ class Exporter:
         if not data:
             Exporter._write_or_print("", file_path)
             return
-
-        if isinstance(data[0], dict) and 'fieldnames' in data[0]:
-            fieldnames = data[0]['fieldnames']
-            rows = data[1:]
-        else:
-            fieldnames = list(data[0].keys()) 
-            rows = data
+        fieldnames = list(data[0].keys())
 
         buffer = io.StringIO()
         writer = csv.DictWriter(
@@ -35,7 +29,7 @@ class Exporter:
             delimiter=delimiter
         )
         writer.writeheader()
-        writer.writerows(rows)
+        writer.writerows(data)
         Exporter._write_or_print(buffer.getvalue(), file_path)
 
     @staticmethod
