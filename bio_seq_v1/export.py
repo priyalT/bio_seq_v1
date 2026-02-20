@@ -20,6 +20,7 @@ class Exporter:
         if not data:
             Exporter._write_or_print("", file_path)
             return
+        
         fieldnames = list(data[0].keys())
 
         buffer = io.StringIO()
