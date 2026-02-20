@@ -38,7 +38,16 @@ class sequence():
              raise ValueError(f"Sequence '{id}' contains invalid characters: {invalid_chars}")
         self.id = id 
         self.sequence = sequence.upper()
-
+        
+    def to_dict(self):
+         return{
+              "id" : self.id,
+              "length" : self.sequence_length(),
+              "gc content": self.gc_content(),
+              "sequence": self.sequence,
+              "reverse complement": self.rev_complement()
+         }
+         
     def __getitem__(self, index):
          return self.sequence[index]
     
