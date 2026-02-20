@@ -106,7 +106,6 @@ class sequence():
         return complement
 
 
-    def export_stats_to_csv(sequences, filepath):
-         exporter = Exporter()
+
          
          
