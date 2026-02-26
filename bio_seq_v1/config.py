@@ -6,11 +6,16 @@ class Config:
     def __init__(self):
         self.config = self._get_defaults()
         config_path = self._find_config_file()
+        self._config_source = "defaults"
+
         if config_path:
                 print(f"Pre-existing configuration found, loading saved settings from {config_path}")
                 self.load_config(config_path)
+                self._config_source = str(config_path)
+
         else:
                 print("No configuration found, using defaults.")
+        self._validate_config()  
 
     def _get_defaults(self):
         return {
@@ -109,10 +114,14 @@ class Config:
     
     def _deep_merge(self, base, override):
         for key, value in override.items():
-            if key in base and isinstance(base[key], dict) and isinstance(value,dict):
-                self._merge_(base[key], value)
+            if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+                self._deep_merge(base[key], value)
             else:
                 base[key] = value
+
+    def __repr__(self):
+        return f"Config(loaded_from={self._config_source})"
+
     
     def load_config(self, config_path):
         try:
@@ -130,8 +139,14 @@ class Config:
              print("Using default configuration.")
 
     
-    def create_config(self):
-         
+    def create_config(self, output_path = None):
+        if output_path is None:
+            output_path = Path.home()/ '.bio_seq' / 'config.yaml'
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with open (output_path, 'w') as f:
+            yaml.dump(self._get_defaults(), f, default_flow_style=False, sort_keys=False)
+        print(f"Config file created at: {output_path}")
 
     def get_config(self, key_path, default=None):
          keys = key_path.split('.')
@@ -143,7 +158,33 @@ class Config:
                    return default
          return value
     
-    def set_config(self, key_path, value, default=None):
-         pass
+    def set_config(self, key_path, value):
+         keys = key_path.split('.')
+         config = self.config
+         for key in keys[:-1]:
+              if key not in config:
+                   config[key] = {}
+              config = config[key]
+         config[keys[-1]] = value 
 
- 
+
+    def _validate_config(self):
+        """Validate config values are within acceptable ranges"""
+        if self.config['parsing']['max_errors'] < 0:
+             print("Warning: max_errors cannot be negative, using 0")
+             self.config['parsing']['max_errors'] = 0
+        if self.config['output']['decimal_places'] < 0:
+            print("Warning: decimal_places cannot be negative, using 2")
+            self.config['output']['decimal_places'] = 2
+        if self.config['orf']['min_length'] < 0:
+             print("Warning: min_length cannot be negative, using 0")
+             self.config['orf']['min_length'] = 0
+        if self.config['orf']['min_protein_length'] < 0:
+             print("Warning: min_protein_length cannot be negative, using 0")
+             self.config['orf']['min_protein_length'] = 0
+        if self.config['motif']['default_k'] < 0:
+             print("Warning: default_k cannot be negative, using 0")
+             self.config['motif']['default_k'] = 0
+
+
+             
