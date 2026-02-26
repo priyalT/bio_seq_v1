@@ -37,7 +37,7 @@ class FASTAParser:
             raise ValueError("File is empty")
 
     def _validate_sequence(self, line: str, linenum: int):
-        valid = set("ACGTUNRYSWKMBDHV-.")
+        valid = set("ACGTUNRYSWKMBDHVacgtunryswkmbdhv-.")
         if not line.isascii():
             msg = f"Invalid character(s) at line {linenum}: {line}"
             raise ValueError(msg)
