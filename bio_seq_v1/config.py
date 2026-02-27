@@ -17,38 +17,38 @@ class Config:
                 self.create_config(config_path)
         self._validate_config()
 
-    def create_config(self):
+    def create_config(self, output_path):
         user_in = input("Since no config files were found, the following options will allow you to set some general defaults according to your liking." \
               "Would you like to input these defaults? If not, the config file formed will contain defaults set beforehand. (Y/N)"
         )
         if user_in == "Y":
-            defaults = self._get_defaults
+            defaults = self._get_defaults()
 
             strict_mode = input("Strict mode on (T/F): ")
-            if strict_mode != "T" or "F":
+            if strict_mode not in ("T", "F"):
                 raise ValueError("Value other than T or F entered. Please enter only T or F.")
             strict_file = input("Strict file parsing (T/F): ")
-            if strict_file != "T" or "F":
+            if strict_file not in ("T", "F"):
                 raise ValueError("Value other than T or F entered. Please enter only T or F.")
             strict_sequence = input("Strict sequence parsing (T/F): ")
-            if strict_sequence != "T" or "F":
+            if strict_sequence not in ("T", "F"):
                 raise ValueError("Value other than T or F entered. Please enter only T or F.")
             case_sensitive = input("Case sensitive parsing (T/F): ")
-            if case_sensitive != "T" or "F":
+            if case_sensitive not in ("T", "F"):
                 raise ValueError("Value other than T or F entered. Please enter only T or F.")
             
             default_format = input("Default format for export (csv, tsv or json): ")
-            if default_format != "csv" or "tsv" or "json":
+            if default_format not in ("csv", "tsv", "json"):
                 raise ValueError("Value other than csv, tsv or json entered. You can export currently in csv, tsv or json only.")
             include_headers = input("Include headers in export? (T/F) ")
-            if include_headers != "T" or "F":
+            if include_headers not in ("T", "F"):
                 raise ValueError("Value other than T or F entered. Please enter only T or F.")
             
             gc_include_ambigcodes = input("Include ambiguous codes during sequence statistics? (T/F) ")
-            if gc_include_ambigcodes != "T" or "F":
+            if gc_include_ambigcodes not in ("T", "F"):
                 raise ValueError("Value other than T or F entered. Please enter only T or F.")
             count_unknown = input("Count unknown characters during sequence statistics? (T/F) ")
-            if count_unknown != "T" or "F":
+            if count_unknown not in ("T", "F"):
                 raise ValueError("Value other than T or F entered. Please enter only T or F.")
             
             start_codons_input = input("Enter start codons separated by commas (e.g., ATG, GTG, TTG): ")
@@ -62,24 +62,24 @@ class Config:
             unknown_codon_char = str(input("Please enter the character used to deal with unknown codons (e.g., X): "))
 
             search_both_strands = input("Allow orf search on both strands? (T/F) ")
-            if search_both_strands != "T" or "F":
+            if search_both_strands not in ("T", "F"):
                 raise ValueError("Value other than T or F entered. Please enter only T or F.")
             allow_alternative_starts = input("Allow orf search with alternate starts? (T/F) ")
-            if allow_alternative_starts != "T" or "F":
+            if allow_alternative_starts not in ("T", "F"):
                 raise ValueError("Value other than T or F entered. Please enter only T or F.")
             nested_orfs = input("Allow nested orf search? (T/F) ")
-            if nested_orfs != "T" or "F":
+            if nested_orfs not in ("T", "F"):
                 raise ValueError("Value other than T or F entered. Please enter only T or F.")
             
             search_reverse_strand = input("Allow search on reverse strand for motif? (T/F) ")
-            if search_reverse_strand != "T" or "F":
+            if search_reverse_strand not in ("T", "F"):
                 raise ValueError("Value other than T or F entered. Please enter only T or F.")
             iupac_support = input("Allow IUPAC support? (T/F) ")
-            if iupac_support != "T" or "F":
+            if iupac_support not in ("T", "F"):
                 raise ValueError("Value other than T or F entered. Please enter only T or F.")
             
-            logging = input("Enable logging? (T/F) ")
-            if logging != "T" or "F":
+            enable_logging = input("Enable logging? (T/F) ")
+            if enable_logging not in ("T", "F"):
                 raise ValueError("Value other than T or F entered. Please enter only T or F.")
 
 
@@ -113,26 +113,27 @@ class Config:
                     'iupac_support': iupac_support
             },
                 'logging': {
-                    'enabled': logging,
+                    'enabled': enable_logging,
             }}
 
             for inp in user_inputs.values():
-                if isinstance(inp, dict):
-                    for x in inp.values():
-                        if x == "T":
-                            x = True
-                        if x == "F":
-                            x = False
-                else: 
-                    for x in inp.values():
-                        if x == "T":
-                            x = True
-                        if x == "F":
-                            x = False
+                    for key, val in inp.items():
+                        if val == "T":
+                            inp[key] = True
+                        elif val == "F":
+                            inp[key] = False
 
-                    
-                             
-                 
+
+            self._deep_merge(defaults, user_inputs)
+            self.config = defaults
+            if output_path is None:
+                output_path = Path.home()/ '.bio_seq' / 'config.yaml'
+            output_path = Path(output_path)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            with open (output_path, 'w') as f:
+                yaml.dump(defaults, f, default_flow_style=False, sort_keys=False)
+            print(f"Config file created at: {output_path}.")
+                                              
         
         elif user_in == "N":
             if output_path is None:
@@ -145,9 +146,6 @@ class Config:
             
         else:
              raise ValueError("Value other than Y or N passed. Please enter either Y or N.")
-
-         # and then merges user_input w get_defaults
-         # and then creates config of this new dictionary that has been created
          
 
 
