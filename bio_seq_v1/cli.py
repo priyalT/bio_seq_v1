@@ -2,6 +2,24 @@ from tabulate import tabulate
 import argparse
 from bio_seq_v1.fasta import FASTAParser
 from bio_seq_v1.stats import sequence
+import rich_click as click
+
+@click.group()
+def bioseq():
+    pass
+
+@bioseq.command()
+@click.option("--file", "-f", required=True)
+@click.option("--gc", is_flag=True)
+def stats(file, gc):
+    pass
+
+
+@bioseq.command()
+@click.option("--file", "-f", required=True)  
+@click.option("--min-length", type=int, default=0)
+def orf(file, min_length):
+    pass
 
 def print_sequence_lengths_formatted(sequences):
     """
