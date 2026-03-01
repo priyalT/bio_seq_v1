@@ -1,25 +1,11 @@
 from tabulate import tabulate
-import argparse
 from bio_seq_v1.fasta import FASTAParser
 from bio_seq_v1.stats import sequence
+from bio_seq_v1.translator import Translator
+from bio_seq_v1.orf import ORF
+from bio_seq_v1.orf import ORFDetector
+
 import rich_click as click
-
-@click.group()
-def bioseq():
-    pass
-
-@bioseq.command()
-@click.option("--file", "-f", required=True)
-@click.option("--gc", is_flag=True)
-def stats(file, gc):
-    pass
-
-
-@bioseq.command()
-@click.option("--file", "-f", required=True)  
-@click.option("--min-length", type=int, default=0)
-def orf(file, min_length):
-    pass
 
 def print_sequence_lengths_formatted(sequences):
     """
@@ -87,6 +73,8 @@ def print_summary(sequences):
     print("BASE COMPOSITION")
     print_base_count(sequences)
 
+
+@click.group()
 def main():
     """
     Command-line interface entry point.
@@ -94,75 +82,155 @@ def main():
     Parses arguments to specify FASTA input source and analysis options,
     and prints the requested sequence information.
     """
-    arg_parser = argparse.ArgumentParser()
+@main.command()
+@click.option("--file", "-f", default=None, help="Path to the FASTA file")
+@click.option("--string", "-s", default=None, help="FASTA-formatted string")
+@click.option("--strict", is_flag=True, help="Enable strict parsing")
+@click.option("--strict-file", is_flag=True, help="Enable strict file validation")
+@click.option("--strict-seq", is_flag=True, help="Fail on invalid sequence characters")
+@click.option("--length", "-l", is_flag=True, help="Compute sequence lengths")
+@click.option("--gc", is_flag=True, help="Compute GC content")
+@click.option("--revcomp", "-rc", is_flag=True, help="Compute reverse complements")
+@click.option("--basecount", "-b", is_flag=True, help="Compute base counts")
+@click.option("--summary", is_flag=True, help="Print full summary")
+def stats(file, string, strict, strict_file, strict_seq, length, gc, revcomp, basecount, summary):
+    """Analyze sequences — lengths, GC content, base composition."""
 
-    input_group = arg_parser.add_mutually_exclusive_group(required=True)
-    input_group.add_argument("--file", "-f", help="Path to the FASTA file")
-    input_group.add_argument("--string", "-s", help="FASTA-formatted string")
-
-    arg_parser.add_argument("--strict", action="store_true",
-                            help="Enable strict parsing (fail on structural errors)")
-    arg_parser.add_argument("--strict-file", action="store_true",
-                            help="Enable strict file validation")
-    arg_parser.add_argument("--strict-seq", action="store_true",
-                            help="Fail on invalid sequence characters")
-
-    arg_parser.add_argument("--length", "-l", action="store_true",
-                            help="Compute sequence length per sequence")
-    arg_parser.add_argument("--gc", action="store_true",
-                            help="Compute GC content per sequence")
-    arg_parser.add_argument("--revcomp", "-rc", action="store_true",
-                            help="Compute reverse complements per sequence")
-    arg_parser.add_argument("--basecount", "-b", action="store_true",
-                            help="Compute base counts per sequence")
-    arg_parser.add_argument("--summary", action="store_true",
-                            help="Print summary statistics")
-
-    args = arg_parser.parse_args()
+    if not file and not string:
+        raise click.UsageError("Must provide either --file or --string")
+    if file and string:
+        raise click.UsageError("Cannot use both --file and --string")
 
     fasta_parser = FASTAParser(
-        path=args.file,
-        strict=args.strict,
-        strict_file=args.strict_file,
-        strict_seq=args.strict_seq
+        path=file,
+        strict=strict,
+        strict_file=strict_file,
+        strict_seq=strict_seq
     )
-
     try:
-        if args.file:
+        if file:
             fasta_parser.parse_file()
         else:
-            fasta_parser.parse_string(args.string)
+            fasta_parser.parse_string(string)
     except Exception as e:
-        print(f"Parsing failed: {e}")
+        click.echo(f"Parsing failed: {e}", err=True)
         return
-
-    print(fasta_parser.get_report())
-    print()
-
+    click.echo(fasta_parser.get_report())
+    click.echo()
     sequences = fasta_parser.sequences
-
     if not sequences:
-        raise ValueError("No valid sequences parsed.")
+        raise click.ClickException("No valid sequences parsed.")
 
-    if not any([args.length, args.gc, args.revcomp, args.basecount, args.summary]):
+    if not any([length, gc, revcomp, basecount, summary]):
         print_summary(sequences)
         return
-
-    if args.length:
+    if length:
         print_sequence_lengths_formatted(sequences)
-        print()
-
-    if args.gc:
+        click.echo()
+    if gc:
         print_gc_content_table(sequences)
-        print()
-
-    if args.revcomp:
+        click.echo()
+    if revcomp:
         print_revcomp(sequences)
-        print()
-
-    if args.basecount:
+        click.echo()
+    if basecount:
         print_base_count(sequences)
-        print()
-
-    if args.summary:
+        click.echo()
+    if summary:
         print_summary(sequences)
+
+
+@main.command()
+@click.option("--file", "-f", default=None, help="Path to the FASTA file")
+@click.option("--string", "-s", default=None, help="FASTA-formatted string")
+@click.option("--strict", is_flag=True, help="Enable strict parsing")
+@click.option("--strict-file", is_flag=True, help="Enable strict file validation")
+@click.option("--strict-seq", is_flag=True, help="Fail on invalid sequence characters")
+@click.option("--frame", type = click.IntRange(0, 2), default=0, help="Frame for translation (0, 1, or 2)")
+@click.option("--six-frames", is_flag=True, help="Translate the parsed sequences in all six frames")
+def translate(file, string, strict, strict_file, strict_seq, frame, six_frames):
+    """Translate given sequence."""
+
+    if not file and not string:
+        raise click.UsageError("Must provide either --file or --string")
+    if file and string:
+        raise click.UsageError("Cannot use both --file and --string")
+
+    fasta_parser = FASTAParser(
+        path=file, strict=strict,
+        strict_file=strict_file, strict_seq=strict_seq
+    )
+    try:
+        if file:
+            fasta_parser.parse_file()
+        else:
+            fasta_parser.parse_string(string)
+    except Exception as e:
+        click.echo(f"Parsing failed: {e}", err= True)
+        return
+    sequences = fasta_parser.sequences
+    if not sequences:
+        raise click.ClickException("No valid sequences.")
+    translator = Translator()
+
+    for seq in sequences:
+        if six_frames:
+            results = translator.translate_six_frames(seq)
+            click.echo(f">{seq.id} — Six-frame translation")
+            for frame_label, protein in results.items():
+                click.echo(f" Frame {frame_label}: {protein}")
+        else:
+            protein = translator.translate(seq, frame)
+            click.echo(f">{seq.id} — Frame {frame}")
+            click.echo(f"  {protein}")
+        click.echo()
+
+@main.command()
+@click.option("--file", "-f", default=None, help="Path to the FASTA file")
+@click.option("--string", "-s", default=None, help="FASTA-formatted string")
+@click.option("--strict", is_flag=True, help="Enable strict parsing")
+@click.option("--strict-file", is_flag=True, help="Enable strict file validation")
+@click.option("--strict-seq", is_flag=True, help="Fail on invalid sequence characters")
+@click.option("--min-length", default=0, help="Mininmum length for open reading frames")
+@click.option("--overlap", is_flag = True, help="Overlapping ORFs")
+def orf(file, string, strict, strict_file, strict_seq, min_length, overlap):
+    """Find open reading frames in sequences."""
+
+    if not file and not string:
+        raise click.UsageError("Must provide either --file or --string")
+    if file and string:
+        raise click.UsageError("Cannot use both --file and --string")
+
+    fasta_parser = FASTAParser(
+        path=file, strict=strict,
+        strict_file=strict_file, strict_seq=strict_seq
+    )
+    try:
+        if file:
+            fasta_parser.parse_file()
+        else:
+            fasta_parser.parse_string(string)
+    except Exception as e:
+        click.echo(f"Parsing failed: {e}", err= True)
+        return
+    sequences = fasta_parser.sequences
+    if not sequences:
+        raise click.ClickException("No valid sequences.")
+    detector = ORFDetector(min_length=min_length)
+    for seq in sequences:
+        results = detector.find_orfs(seq)      
+        click.echo(f">{seq.id} — ORFs found: {len(results)}")
+        for found_orf in results:
+            click.echo(f"  start={found_orf.start}, end={found_orf.end}, protein={found_orf.protein}")
+        if overlap: 
+            overlaps = detector.overlapping_orfs(results)
+            if overlaps:
+                click.echo(f"  Overlapping pairs: {len(overlaps)}")
+                for orf1, orf2 in overlaps:
+                    click.echo(f"    {orf1.start}-{orf1.end} ↔ {orf2.start}-{orf2.end}")
+        click.echo()
+
+
+
+
+
