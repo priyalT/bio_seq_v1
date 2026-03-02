@@ -4,6 +4,7 @@ from bio_seq_v1.stats import sequence
 from bio_seq_v1.translator import Translator
 from bio_seq_v1.orf import ORF
 from bio_seq_v1.orf import ORFDetector
+from bio_seq_v1.motif_search import MotifFinder
 
 import rich_click as click
 
@@ -229,6 +230,65 @@ def orf(file, string, strict, strict_file, strict_seq, min_length, overlap):
                 for orf1, orf2 in overlaps:
                     click.echo(f"    {orf1.start}-{orf1.end} ↔ {orf2.start}-{orf2.end}")
         click.echo()
+
+@main.command()
+@click.option("--file", "-f", default=None, help="Path to the FASTA file")
+@click.option("--string", "-s", default=None, help="FASTA-formatted string")
+@click.option("--strict", is_flag=True, help="Enable strict parsing")
+@click.option("--strict-file", is_flag=True, help="Enable strict file validation")
+@click.option("--strict-seq", is_flag=True, help="Fail on invalid sequence characters")
+@click.option("--mode", type=click.Choice(["single", "both", "search-all"]), default="single",
+              help="Search mode: single strand, both strands, or all sequences")
+@click.option("--k", default=3, help="Mininmum length for motif")
+@click.option("--mismatch", "-m", default=0, help="Numer of mismatches allowed")
+@click.option("--pattern", "-p", required=True, help="Motif pattern to search for (e.g., TATAAA)")
+def motif(file, string, strict, strict_file, strict_seq, mode, k, mismatch, pattern):
+    """Find motifs in sequences."""
+
+    if not file and not string:
+        raise click.UsageError("Must provide either --file or --string")
+    if file and string:
+        raise click.UsageError("Cannot use both --file and --string")
+
+    fasta_parser = FASTAParser(
+        path=file, strict=strict,
+        strict_file=strict_file, strict_seq=strict_seq
+    )
+    try:
+        if file:
+            fasta_parser.parse_file()
+        else:
+            fasta_parser.parse_string(string)
+    except Exception as e:
+        click.echo(f"Parsing failed: {e}", err= True)
+        return
+    sequences = fasta_parser.sequences
+    if not sequences:
+        raise click.ClickException("No valid sequences.")
+    
+    finder = MotifFinder(k=k)
+
+    if mode == 'single':
+        for seq in sequences:
+            single_strand = finder.search_single(seq, pattern, mismatch)
+            click.echo(f">{seq.id} — Motifs on single strand found: {len(single_strand)}")
+            for found_motif in single_strand: 
+                click.echo(f"  position = {found_motif.position}, matched sequence = {found_motif.matched_seq}, strand attributes = {found_motif.strand_attributes}")
+    if mode == 'both':
+        for seq in sequences:
+            double_strand = finder.search_both_strands(seq, pattern, mismatch)    
+            click.echo(f">{seq.id} — Motifs on both strands found: {len(double_strand)}")
+            for found_motif in double_strand: 
+                click.echo(f"  position = {found_motif.position}, matched sequence = {found_motif.matched_seq}, strand attributes = {found_motif.strand_attributes}")
+    if mode == 'search-all':
+        fasta_motifs = finder.search_fasta(sequences, pattern, mismatch)
+        click.echo(f"Motifs found across all sequences: {len(fasta_motifs)}")
+        for found_motif in fasta_motifs: 
+            click.echo(f"  position = {found_motif.position}, matched sequence = {found_motif.matched_seq}, strand attributes = {found_motif.strand_attributes}")
+        
+
+
+
 
 
 
