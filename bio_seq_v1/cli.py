@@ -125,82 +125,40 @@ def stats(file, string, strict, strict_file, strict_seq, length, gc, revcomp, ba
     if not sequences:
         raise click.ClickException("No valid sequences parsed.")
     if not any([length, gc, revcomp, basecount, summary]):
-        print_summary(sequences)
-        if output:
-            data = [{"id": s.id, "length": s.sequence_length(), "gc_content": s.gc_content(), "rev_comp": s.rev_complement(), "base_count": s.base_count()} for s in sequences]
-            if export_format == "csv":
-                Exporter.to_csv(data, file_path=output)
-            elif export_format == "tsv":
-                Exporter.to_tsv(data, file_path=output)
-            elif export_format == "json":
-                Exporter.to_json(data, file_path=output)
-            else:
-                raise click.UsageError("Please enter either csv, tsv or json as formats")
-        return
-    if length:
+        summary = True
+    export_data = [{"id": s.id} for s in sequences] if output else None
+    if length or summary:
         print_sequence_lengths_formatted(sequences)
         click.echo()
-        if output:
-            data = [{"id": s.id, "length": s.sequence_length()} for s in sequences]
-            if export_format == "csv":
-                Exporter.to_csv(data, file_path=output)
-            elif export_format == "tsv":
-                Exporter.to_tsv(data, file_path=output)
-            elif export_format == "json":
-                Exporter.to_json(data, file_path=output)
-            else:
-                raise click.UsageError("Please enter either csv, tsv or json as formats")
-    if gc:
+        if export_data:
+            for i, s in enumerate(sequences):
+                export_data[i]["length"] = s.sequence_length()
+    if gc or summary:
         print_gc_content_table(sequences)
         click.echo()
-        if output:
-            data = [{"id": s.id, "gc_content": s.gc_content()} for s in sequences]
-            if export_format == "csv":
-                Exporter.to_csv(data, file_path=output)
-            elif export_format == "tsv":
-                Exporter.to_tsv(data, file_path=output)
-            elif export_format == "json":
-                Exporter.to_json(data, file_path=output)
-            else:
-                raise click.UsageError("Please enter either csv, tsv or json as formats")
-    if revcomp:
+        if export_data:
+            for i, s in enumerate(sequences):
+                export_data[i]["gc_content"] = s.gc_content()
+    if revcomp or summary:
         print_revcomp(sequences)
         click.echo()
-        if output:
-            data = [{"id": s.id, "rev_comp": s.rev_complement()} for s in sequences]
-            if export_format == "csv":
-                Exporter.to_csv(data, file_path=output)
-            elif export_format == "tsv":
-                Exporter.to_tsv(data, file_path=output)
-            elif export_format == "json":
-                Exporter.to_json(data, file_path=output)
-            else:
-                raise click.UsageError("Please enter either csv, tsv or json as formats")
-    if basecount:
+        if export_data:
+            for i, s in enumerate(sequences):
+                export_data[i]["rev_comp"] = s.rev_complement()
+    if basecount or summary:
         print_base_count(sequences)
         click.echo()
-        if output:
-            data = [{"id": s.id, "base_count": s.base_count()} for s in sequences]
-            if export_format == "csv":
-                Exporter.to_csv(data, file_path=output)
-            elif export_format == "tsv":
-                Exporter.to_tsv(data, file_path=output)
-            elif export_format == "json":
-                Exporter.to_json(data, file_path=output)
-            else:
-                raise click.UsageError("Please enter either csv, tsv or json as formats")
-    if summary:
-        print_summary(sequences)
-        if output:
-            data = [{"id": s.id, "length": s.sequence_length(), "gc_content": s.gc_content(), "rev_comp": s.rev_complement(), "base_count": s.base_count()} for s in sequences]
-            if export_format == "csv":
-                Exporter.to_csv(data, file_path=output)
-            elif export_format == "tsv":
-                Exporter.to_tsv(data, file_path=output)
-            elif export_format == "json":
-                Exporter.to_json(data, file_path=output)
-            else:
-                raise click.UsageError("Please enter either csv, tsv or json as formats")
+        if export_data:
+            for i, s in enumerate(sequences):
+                export_data[i]["base_count"] = s.base_count()
+    if output and export_data:
+        if export_format == "csv":
+            Exporter.to_csv(export_data, file_path=output)
+        elif export_format == "tsv":
+            Exporter.to_tsv(export_data, file_path=output)
+        elif export_format == "json":
+            Exporter.to_json(export_data, file_path=output)
+        click.echo(f"Results saved to {output}")
 
 
 
