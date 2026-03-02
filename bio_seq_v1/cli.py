@@ -6,8 +6,11 @@ from bio_seq_v1.orf import ORF
 from bio_seq_v1.orf import ORFDetector
 from bio_seq_v1.motif_search import MotifFinder
 from bio_seq_v1.export import Exporter
-
 import rich_click as click
+click.rich_click.USE_RICH_MARKUP = True
+click.rich_click.GROUP_ARGUMENTS_OPTIONS = True
+click.rich_click.STYLE_COMMANDS_TABLE_COLUMN_WIDTH_RATIO = (1, 2)
+
 
 def print_sequence_lengths_formatted(sequences):
     """
