@@ -20,7 +20,7 @@ class Config:
 
     def create_config(self, output_path):
         if output_path is None:
-            output_path = Path.home() / '.bio_seq' / 'config.yaml'
+            output_path = Path(__file__).parent.parent / 'config.yaml'
         if Path(output_path).exists():
             user_in = input("A config file already exists. Would you like to overwrite it? (Y/N) ")
             if user_in != "Y":
@@ -135,9 +135,9 @@ class Config:
             self._deep_merge(defaults, user_inputs)
             self.config = defaults
             if output_path is None:
-                output_path = Path.home()/ '.bio_seq' / 'config.yaml'
+                output_path = Path(__file__).parent.parent / 'config.yaml'
             output_path = Path(output_path)
-            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.parent.parent.mkdir(parents=True, exist_ok=True)
             with open (output_path, 'w') as f:
                 yaml.dump(defaults, f, default_flow_style=False, sort_keys=False)
             print(f"Config file created at: {output_path}.")
@@ -145,9 +145,9 @@ class Config:
         
         elif user_in == "N":
             if output_path is None:
-                output_path = Path.home()/ '.bio_seq' / 'config.yaml'
+                output_path = Path(__file__).parent.parent / 'config.yaml'
             output_path = Path(output_path)
-            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.parent.parent.mkdir(parents=True, exist_ok=True)
             with open (output_path, 'w') as f:
                 yaml.dump(self._get_defaults(), f, default_flow_style=False, sort_keys=False)
             print(f"Config file created at: {output_path} using general defaults.")
@@ -248,7 +248,7 @@ class Config:
         project_config = Path("./bio_seq_config.yaml")
         if project_config.exists():
             return project_config
-        user_config = Path.home() / '.bio_seq' / 'config.yaml'
+        user_config = Path(__file__).parent.parent / 'config.yaml'
         if user_config.exists():
             return user_config
         return None
