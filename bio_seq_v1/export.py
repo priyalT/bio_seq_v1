@@ -76,7 +76,7 @@ class Exporter:
     def motifs_to_csv(matches, file_path=None):
         rows=[
             {
-                "id" : m.id,
+                "id" : m.seq_id,
                 "position" : m.position,
                 'matched_seq' : m.matched_seq,
                 'strand_attributes' : m.strand_attributes
