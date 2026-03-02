@@ -5,21 +5,29 @@ import yaml
 class Config:
     def __init__(self):
         self.config = self._get_defaults()
-        config_path = self._find_config_file()
         self._config_source = "defaults"
+        config_path = self._find_config_file()
+        
 
         if config_path:
                 print(f"Pre-existing configuration found, loading saved settings from {config_path}")
                 self.load_config(config_path)
                 self._config_source = str(config_path)
 
-        else:
-                self.create_config(config_path)
-        self._validate_config()
+        # else:
+        #         self.create_config(config_path)
+        # self._validate_config()
 
     def create_config(self, output_path):
-        user_in = input("Since no config files were found, the following options will allow you to set some general defaults according to your liking." \
-              "Would you like to input these defaults? If not, the config file formed will contain defaults set beforehand. (Y/N)"
+        if output_path is None:
+            output_path = Path.home() / '.bio_seq' / 'config.yaml'
+        if Path(output_path).exists():
+            user_in = input("A config file already exists. Would you like to overwrite it? (Y/N) ")
+            if user_in != "Y":
+                print("Keeping existing config.")
+                return
+        user_in = input("Since no config files were found, the following options will allow you to set some general defaults according to your liking. \n"
+              "Would you like to input these defaults? If not, the config file formed will contain defaults set beforehand. (Y/N) "
         )
         if user_in == "Y":
             defaults = self._get_defaults()
