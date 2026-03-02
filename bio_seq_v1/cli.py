@@ -173,8 +173,8 @@ def stats(file, string, strict, strict_file, strict_seq, length, gc, revcomp, ba
 @click.option("--strict-seq", is_flag=True, help="Fail on invalid sequence characters")
 @click.option("--frame", type = click.IntRange(0, 2), default=0, help="Frame for translation (0, 1, or 2)")
 @click.option("--six-frames", is_flag=True, help="Translate the parsed sequences in all six frames")
-@click.option("--format", "export_format", type=click.Choice(["csv", "tsv", "json"]), default="csv",
-              help="Export format: to csv, to tsv, to json, sequences to csv")
+@click.option("--format", "export_format", type=click.Choice(["csv", "tsv", "json", "fasta"]), default="csv",
+              help="Export format: to csv, to tsv, to json, to fasta")
 @click.option("--output", "-o", default=None, help="Output file path (prints to stdout if not given)")
 def translate(file, string, strict, strict_file, strict_seq, frame, six_frames, export_format, output):
     """Translate given sequence."""
@@ -201,8 +201,6 @@ def translate(file, string, strict, strict_file, strict_seq, frame, six_frames, 
         raise click.ClickException("No valid sequences.")
     translator = Translator()
     export_data = [] if output else None
-
-
     for seq in sequences:
         if six_frames:
             results = translator.translate_six_frames(seq)
@@ -227,6 +225,16 @@ def translate(file, string, strict, strict_file, strict_seq, frame, six_frames, 
             Exporter.to_tsv(export_data, file_path=output)
         elif export_format == "json":
             Exporter.to_json(export_data, file_path=output)
+        elif export_format == "fasta":
+            fasta_seqs = []
+            for row in export_data:
+                if "protein" in row:
+                    fasta_seqs.append(sequence(row["id"], row["protein"]))
+                else:
+                    for key, val in row.items():
+                        if key.startswith("frame_"):
+                            fasta_seqs.append(sequence(f"{row['id']}_{key}", val))
+            Exporter.to_fasta(fasta_seqs, file_path=output)
         click.echo(f"Results saved to {output}")
 
 
@@ -239,8 +247,8 @@ def translate(file, string, strict, strict_file, strict_seq, frame, six_frames, 
 @click.option("--strict-seq", is_flag=True, help="Fail on invalid sequence characters")
 @click.option("--min-length", default=0, help="Mininmum length for open reading frames")
 @click.option("--overlap", is_flag = True, help="Overlapping ORFs")
-@click.option("--format", "export_format", type=click.Choice(["orfs-to-csv", "tsv", "json"]), default="csv",
-              help="Export format: to csv, to tsv, to json, sequences to csv")
+@click.option("--format", "export_format", type=click.Choice(["csv", "tsv", "json"]), default="csv",
+              help="Export format: to csv, to tsv, to json")
 @click.option("--output", "-o", default=None, help="Output file path (prints to stdout if not given)")
 def orf(file, string, strict, strict_file, strict_seq, min_length, overlap, export_format, output):
     """Find open reading frames in sequences."""
@@ -249,7 +257,6 @@ def orf(file, string, strict, strict_file, strict_seq, min_length, overlap, expo
         raise click.UsageError("Must provide either --file or --string")
     if file and string:
         raise click.UsageError("Cannot use both --file and --string")
-
     fasta_parser = FASTAParser(
         path=file, strict=strict,
         strict_file=strict_file, strict_seq=strict_seq
@@ -267,11 +274,13 @@ def orf(file, string, strict, strict_file, strict_seq, min_length, overlap, expo
         raise click.ClickException("No valid sequences.")
     detector = ORFDetector(min_length=min_length)
 
+    all_orfs = []
     for seq in sequences:
         results = detector.find_orfs(seq)      
         click.echo(f">{seq.id} — ORFs found: {len(results)}")
         for found_orf in results:
             click.echo(f"  start={found_orf.start}, end={found_orf.end}, protein={found_orf.protein}")
+        all_orfs.extend(results)
         if overlap: 
             overlaps = detector.overlapping_orfs(results)
             if overlaps:
@@ -279,6 +288,17 @@ def orf(file, string, strict, strict_file, strict_seq, min_length, overlap, expo
                 for orf1, orf2 in overlaps:
                     click.echo(f"    {orf1.start}-{orf1.end} ↔ {orf2.start}-{orf2.end}")
         click.echo()
+    if output and all_orfs:
+        if export_format == "csv":
+            Exporter.orfs_to_csv(all_orfs, file_path=output)
+        elif export_format == "tsv":
+            data = [o.to_dict() for o in all_orfs]
+            Exporter.to_tsv(data, file_path=output)
+        elif export_format == "json":
+            data = [o.to_dict() for o in all_orfs]
+            Exporter.to_json(data, file_path=output)
+        click.echo(f"Results saved to {output}")
+
 
 @main.command()
 @click.option("--file", "-f", default=None, help="Path to the FASTA file")
