@@ -130,38 +130,41 @@ def stats(file, string, strict, strict_file, strict_seq, length, gc, revcomp, ba
     if not any([length, gc, revcomp, basecount, summary]):
         summary = True
     export_data = [{"id": s.id} for s in sequences] if output else None
-    if length or summary:
-        print_sequence_lengths_formatted(sequences)
-        click.echo()
-        if export_data:
-            for i, s in enumerate(sequences):
-                export_data[i]["length"] = s.sequence_length()
-    if gc or summary:
-        print_gc_content_table(sequences)
-        click.echo()
-        if export_data:
-            for i, s in enumerate(sequences):
-                export_data[i]["gc_content"] = s.gc_content()
-    if revcomp or summary:
-        print_revcomp(sequences)
-        click.echo()
-        if export_data:
-            for i, s in enumerate(sequences):
-                export_data[i]["rev_comp"] = s.rev_complement()
-    if basecount or summary:
-        print_base_count(sequences)
-        click.echo()
-        if export_data:
-            for i, s in enumerate(sequences):
-                export_data[i]["base_count"] = s.base_count()
-    if output and export_data:
-        if export_format == "csv":
-            Exporter.to_csv(export_data, file_path=output)
-        elif export_format == "tsv":
-            Exporter.to_tsv(export_data, file_path=output)
-        elif export_format == "json":
-            Exporter.to_json(export_data, file_path=output)
-        click.echo(f"Results saved to {output}")
+    try:
+        if length or summary:
+            print_sequence_lengths_formatted(sequences)
+            click.echo()
+            if export_data:
+                for i, s in enumerate(sequences):
+                    export_data[i]["length"] = s.sequence_length()
+        if gc or summary:
+            print_gc_content_table(sequences)
+            click.echo()
+            if export_data:
+                for i, s in enumerate(sequences):
+                    export_data[i]["gc_content"] = s.gc_content()
+        if revcomp or summary:
+            print_revcomp(sequences)
+            click.echo()
+            if export_data:
+                for i, s in enumerate(sequences):
+                    export_data[i]["rev_comp"] = s.rev_complement()
+        if basecount or summary:
+            print_base_count(sequences)
+            click.echo()
+            if export_data:
+                for i, s in enumerate(sequences):
+                    export_data[i]["base_count"] = s.base_count()
+        if output and export_data:
+            if export_format == "csv":
+                Exporter.to_csv(export_data, file_path=output)
+            elif export_format == "tsv":
+                Exporter.to_tsv(export_data, file_path=output)
+            elif export_format == "json":
+                Exporter.to_json(export_data, file_path=output)
+            click.echo(f"Results saved to {output}")
+    except ValueError as e:
+        click.ClickException(str(e))
 
 
 
@@ -201,41 +204,44 @@ def translate(file, string, strict, strict_file, strict_seq, frame, six_frames, 
         raise click.ClickException("No valid sequences.")
     translator = Translator()
     export_data = [] if output else None
-    for seq in sequences:
-        if six_frames:
-            results = translator.translate_six_frames(seq)
-            click.echo(f">{seq.id} — Six-frame translation")
-            row = {"id": seq.id}
-            for frame_label, protein in results.items():
-                click.echo(f" Frame {frame_label}: {protein}")
-                row[f"frame_{frame_label}"] = protein
-            if export_data is not None:
-                export_data.append(row)
-        else:
-            protein = translator.translate(seq, frame)
-            click.echo(f">{seq.id} — Frame {frame}")
-            click.echo(f"  {protein}")
-            if export_data is not None:
-                export_data.append({"id": seq.id, "frame": frame, "protein": protein})
-        click.echo()
-    if output and export_data:
-        if export_format == "csv":
-            Exporter.to_csv(export_data, file_path=output)
-        elif export_format == "tsv":
-            Exporter.to_tsv(export_data, file_path=output)
-        elif export_format == "json":
-            Exporter.to_json(export_data, file_path=output)
-        elif export_format == "fasta":
-            fasta_seqs = []
-            for row in export_data:
-                if "protein" in row:
-                    fasta_seqs.append(sequence(row["id"], row["protein"]))
-                else:
-                    for key, val in row.items():
-                        if key.startswith("frame_"):
-                            fasta_seqs.append(sequence(f"{row['id']}_{key}", val))
-            Exporter.to_fasta(fasta_seqs, file_path=output)
-        click.echo(f"Results saved to {output}")
+    try:
+        for seq in sequences:
+            if six_frames:
+                results = translator.translate_six_frames(seq)
+                click.echo(f">{seq.id} — Six-frame translation")
+                row = {"id": seq.id}
+                for frame_label, protein in results.items():
+                    click.echo(f" Frame {frame_label}: {protein}")
+                    row[f"frame_{frame_label}"] = protein
+                if export_data is not None:
+                    export_data.append(row)
+            else:
+                protein = translator.translate(seq, frame)
+                click.echo(f">{seq.id} — Frame {frame}")
+                click.echo(f"  {protein}")
+                if export_data is not None:
+                    export_data.append({"id": seq.id, "frame": frame, "protein": protein})
+            click.echo()
+        if output and export_data:
+            if export_format == "csv":
+                Exporter.to_csv(export_data, file_path=output)
+            elif export_format == "tsv":
+                Exporter.to_tsv(export_data, file_path=output)
+            elif export_format == "json":
+                Exporter.to_json(export_data, file_path=output)
+            elif export_format == "fasta":
+                fasta_seqs = []
+                for row in export_data:
+                    if "protein" in row:
+                        fasta_seqs.append(sequence(row["id"], row["protein"]))
+                    else:
+                        for key, val in row.items():
+                            if key.startswith("frame_"):
+                                fasta_seqs.append(sequence(f"{row['id']}_{key}", val))
+                Exporter.to_fasta(fasta_seqs, file_path=output)
+            click.echo(f"Results saved to {output}")
+    except ValueError as e:
+        click.ClickException(str(e))
 
 
 
@@ -274,33 +280,35 @@ def orf(file, string, strict, strict_file, strict_seq, min_length, overlap, expo
         raise click.ClickException("No valid sequences.")
     detector = ORFDetector(min_length=min_length)
     all_orfs = []
-    for seq in sequences:
-        results = detector.find_orfs(seq)      
-        click.echo(f">{seq.id} — ORFs found: {len(results)}")
-        for found_orf in results:
-            click.echo(f"  start={found_orf.start}, end={found_orf.end}, protein={found_orf.protein}")
-        all_orfs.extend(results)
-        if overlap: 
-            overlaps = detector.overlapping_orfs(results)
-            if overlaps:
-                click.echo(f"  Overlapping pairs: {len(overlaps)}")
-                for orf1, orf2 in overlaps:
-                    click.echo(f"    {orf1.start}-{orf1.end} ↔ {orf2.start}-{orf2.end}")
-        click.echo()
-    if output and all_orfs:
-        if export_format == "csv":
-            Exporter.orfs_to_csv(all_orfs, file_path=output)
-        elif export_format == "tsv":
-            data = [o.to_dict() for o in all_orfs]
-            Exporter.to_tsv(data, file_path=output)
-        elif export_format == "json":
-            data = [o.to_dict() for o in all_orfs]
-            Exporter.to_json(data, file_path=output)
-        elif export_format == "fasta":
-            fasta_seqs = [sequence(f"{o.seq_id}_orf_{o.start}_{o.end}", o.protein) for o in all_orfs]
-            Exporter.to_fasta(fasta_seqs, file_path=output)
-        click.echo(f"Results saved to {output}")
-
+    try:
+        for seq in sequences:
+            results = detector.find_orfs(seq)      
+            click.echo(f">{seq.id} — ORFs found: {len(results)}")
+            for found_orf in results:
+                click.echo(f"  start={found_orf.start}, end={found_orf.end}, protein={found_orf.protein}")
+            all_orfs.extend(results)
+            if overlap: 
+                overlaps = detector.overlapping_orfs(results)
+                if overlaps:
+                    click.echo(f"  Overlapping pairs: {len(overlaps)}")
+                    for orf1, orf2 in overlaps:
+                        click.echo(f"    {orf1.start}-{orf1.end} ↔ {orf2.start}-{orf2.end}")
+            click.echo()
+        if output and all_orfs:
+            if export_format == "csv":
+                Exporter.orfs_to_csv(all_orfs, file_path=output)
+            elif export_format == "tsv":
+                data = [o.to_dict() for o in all_orfs]
+                Exporter.to_tsv(data, file_path=output)
+            elif export_format == "json":
+                data = [o.to_dict() for o in all_orfs]
+                Exporter.to_json(data, file_path=output)
+            elif export_format == "fasta":
+                fasta_seqs = [sequence(f"{o.seq_id}_orf_{o.start}_{o.end}", o.protein) for o in all_orfs]
+                Exporter.to_fasta(fasta_seqs, file_path=output)
+            click.echo(f"Results saved to {output}")
+    except ValueError as e:
+        raise click.ClickException(str(e))
 
 @main.command()
 @click.option("--file", "-f", default=None, help="Path to the FASTA file")
@@ -342,34 +350,38 @@ def motif(file, string, strict, strict_file, strict_seq, mode, k, mismatch, patt
     
     finder = MotifFinder(k=k)
     all_motifs = []
-    if mode == 'single':
-        for seq in sequences:
-            single_strand = finder.search_single(seq, pattern, mismatch)
-            click.echo(f">{seq.id} — Motifs on single strand found: {len(single_strand)}")
-            for found_motif in single_strand: 
+    try:
+        if mode == 'single':
+            for seq in sequences:
+                single_strand = finder.search_single(seq, pattern, mismatch)
+                click.echo(f">{seq.id} — Motifs on single strand found: {len(single_strand)}")
+                for found_motif in single_strand: 
+                    click.echo(f"  position = {found_motif.position}, matched sequence = {found_motif.matched_seq}, strand attributes = {found_motif.strand_attributes}")
+                all_motifs.extend(single_strand)
+        if mode == 'both':
+            for seq in sequences:
+                double_strand = finder.search_both_strands(seq, pattern, mismatch)    
+                click.echo(f">{seq.id} — Motifs on both strands found: {len(double_strand)}")
+                for found_motif in double_strand: 
+                    click.echo(f"  position = {found_motif.position}, matched sequence = {found_motif.matched_seq}, strand attributes = {found_motif.strand_attributes}")
+                all_motifs.extend(double_strand)
+        if mode == 'search-all':
+            fasta_motifs = finder.search_fasta(sequences, pattern, mismatch)
+            click.echo(f"Motifs found across all sequences: {len(fasta_motifs)}")
+            for found_motif in fasta_motifs: 
                 click.echo(f"  position = {found_motif.position}, matched sequence = {found_motif.matched_seq}, strand attributes = {found_motif.strand_attributes}")
-            all_motifs.extend(single_strand)
-    if mode == 'both':
-        for seq in sequences:
-            double_strand = finder.search_both_strands(seq, pattern, mismatch)    
-            click.echo(f">{seq.id} — Motifs on both strands found: {len(double_strand)}")
-            for found_motif in double_strand: 
-                click.echo(f"  position = {found_motif.position}, matched sequence = {found_motif.matched_seq}, strand attributes = {found_motif.strand_attributes}")
-            all_motifs.extend(double_strand)
-    if mode == 'search-all':
-        fasta_motifs = finder.search_fasta(sequences, pattern, mismatch)
-        click.echo(f"Motifs found across all sequences: {len(fasta_motifs)}")
-        for found_motif in fasta_motifs: 
-            click.echo(f"  position = {found_motif.position}, matched sequence = {found_motif.matched_seq}, strand attributes = {found_motif.strand_attributes}")
-        all_motifs.extend(fasta_motifs)
-    if output and all_motifs:
-        if export_format == "csv":
-            Exporter.motifs_to_csv(all_motifs, file_path=output)
-        elif export_format == "tsv":
-            data = [o.to_dict() for o in all_motifs]
-            Exporter.to_tsv(data, file_path=output)
-        elif export_format == "json":
-            data = [o.to_dict() for o in all_motifs]
-            Exporter.to_json(data, file_path=output)
+            all_motifs.extend(fasta_motifs)
+        if output and all_motifs:
+            if export_format == "csv":
+                Exporter.motifs_to_csv(all_motifs, file_path=output)
+            elif export_format == "tsv":
+                data = [o.to_dict() for o in all_motifs]
+                Exporter.to_tsv(data, file_path=output)
+            elif export_format == "json":
+                data = [o.to_dict() for o in all_motifs]
+                Exporter.to_json(data, file_path=output)
+    except ValueError as e:
+        raise click.ClickException(str(e))
+
 
 
