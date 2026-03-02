@@ -5,6 +5,7 @@ from bio_seq_v1.translator import Translator
 from bio_seq_v1.orf import ORF
 from bio_seq_v1.orf import ORFDetector
 from bio_seq_v1.motif_search import MotifFinder
+from bio_seq_v1.export import Exporter
 
 import rich_click as click
 
@@ -94,14 +95,16 @@ def main():
 @click.option("--revcomp", "-rc", is_flag=True, help="Compute reverse complements")
 @click.option("--basecount", "-b", is_flag=True, help="Compute base counts")
 @click.option("--summary", is_flag=True, help="Print full summary")
-def stats(file, string, strict, strict_file, strict_seq, length, gc, revcomp, basecount, summary):
+@click.option("--format", "export_format", type=click.Choice(["csv", "tsv", "json"]), default="csv",
+              help="Export format: to csv, to tsv, to json, sequences to csv")
+@click.option("--output", "-o", default=None, help="Output file path (prints to stdout if not given)")
+def stats(file, string, strict, strict_file, strict_seq, length, gc, revcomp, basecount, summary, output, export_format):
     """Analyze sequences — lengths, GC content, base composition."""
 
     if not file and not string:
         raise click.UsageError("Must provide either --file or --string")
     if file and string:
         raise click.UsageError("Cannot use both --file and --string")
-
     fasta_parser = FASTAParser(
         path=file,
         strict=strict,
@@ -121,24 +124,84 @@ def stats(file, string, strict, strict_file, strict_seq, length, gc, revcomp, ba
     sequences = fasta_parser.sequences
     if not sequences:
         raise click.ClickException("No valid sequences parsed.")
-
     if not any([length, gc, revcomp, basecount, summary]):
         print_summary(sequences)
+        if output:
+            data = [{"id": s.id, "length": s.sequence_length(), "gc_content": s.gc_content(), "rev_comp": s.rev_complement(), "base_count": s.base_count()} for s in sequences]
+            if export_format == "csv":
+                Exporter.to_csv(data, file_path=output)
+            elif export_format == "tsv":
+                Exporter.to_tsv(data, file_path=output)
+            elif export_format == "json":
+                Exporter.to_json(data, file_path=output)
+            else:
+                raise click.UsageError("Please enter either csv, tsv or json as formats")
         return
     if length:
         print_sequence_lengths_formatted(sequences)
         click.echo()
+        if output:
+            data = [{"id": s.id, "length": s.sequence_length()} for s in sequences]
+            if export_format == "csv":
+                Exporter.to_csv(data, file_path=output)
+            elif export_format == "tsv":
+                Exporter.to_tsv(data, file_path=output)
+            elif export_format == "json":
+                Exporter.to_json(data, file_path=output)
+            else:
+                raise click.UsageError("Please enter either csv, tsv or json as formats")
     if gc:
         print_gc_content_table(sequences)
         click.echo()
+        if output:
+            data = [{"id": s.id, "gc_content": s.gc_content()} for s in sequences]
+            if export_format == "csv":
+                Exporter.to_csv(data, file_path=output)
+            elif export_format == "tsv":
+                Exporter.to_tsv(data, file_path=output)
+            elif export_format == "json":
+                Exporter.to_json(data, file_path=output)
+            else:
+                raise click.UsageError("Please enter either csv, tsv or json as formats")
     if revcomp:
         print_revcomp(sequences)
         click.echo()
+        if output:
+            data = [{"id": s.id, "rev_comp": s.rev_complement()} for s in sequences]
+            if export_format == "csv":
+                Exporter.to_csv(data, file_path=output)
+            elif export_format == "tsv":
+                Exporter.to_tsv(data, file_path=output)
+            elif export_format == "json":
+                Exporter.to_json(data, file_path=output)
+            else:
+                raise click.UsageError("Please enter either csv, tsv or json as formats")
     if basecount:
         print_base_count(sequences)
         click.echo()
+        if output:
+            data = [{"id": s.id, "base_count": s.base_count()} for s in sequences]
+            if export_format == "csv":
+                Exporter.to_csv(data, file_path=output)
+            elif export_format == "tsv":
+                Exporter.to_tsv(data, file_path=output)
+            elif export_format == "json":
+                Exporter.to_json(data, file_path=output)
+            else:
+                raise click.UsageError("Please enter either csv, tsv or json as formats")
     if summary:
         print_summary(sequences)
+        if output:
+            data = [{"id": s.id, "length": s.sequence_length(), "gc_content": s.gc_content(), "rev_comp": s.rev_complement(), "base_count": s.base_count()} for s in sequences]
+            if export_format == "csv":
+                Exporter.to_csv(data, file_path=output)
+            elif export_format == "tsv":
+                Exporter.to_tsv(data, file_path=output)
+            elif export_format == "json":
+                Exporter.to_json(data, file_path=output)
+            else:
+                raise click.UsageError("Please enter either csv, tsv or json as formats")
+
 
 
 @main.command()
@@ -285,12 +348,4 @@ def motif(file, string, strict, strict_file, strict_seq, mode, k, mismatch, patt
         click.echo(f"Motifs found across all sequences: {len(fasta_motifs)}")
         for found_motif in fasta_motifs: 
             click.echo(f"  position = {found_motif.position}, matched sequence = {found_motif.matched_seq}, strand attributes = {found_motif.strand_attributes}")
-        
-
-
-
-
-
-
-
 
