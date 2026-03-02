@@ -173,7 +173,10 @@ def stats(file, string, strict, strict_file, strict_seq, length, gc, revcomp, ba
 @click.option("--strict-seq", is_flag=True, help="Fail on invalid sequence characters")
 @click.option("--frame", type = click.IntRange(0, 2), default=0, help="Frame for translation (0, 1, or 2)")
 @click.option("--six-frames", is_flag=True, help="Translate the parsed sequences in all six frames")
-def translate(file, string, strict, strict_file, strict_seq, frame, six_frames):
+@click.option("--format", "export_format", type=click.Choice(["csv", "tsv", "json"]), default="csv",
+              help="Export format: to csv, to tsv, to json, sequences to csv")
+@click.option("--output", "-o", default=None, help="Output file path (prints to stdout if not given)")
+def translate(file, string, strict, strict_file, strict_seq, frame, six_frames, export_format, output):
     """Translate given sequence."""
 
     if not file and not string:
@@ -197,18 +200,36 @@ def translate(file, string, strict, strict_file, strict_seq, frame, six_frames):
     if not sequences:
         raise click.ClickException("No valid sequences.")
     translator = Translator()
+    export_data = [] if output else None
+
 
     for seq in sequences:
         if six_frames:
             results = translator.translate_six_frames(seq)
             click.echo(f">{seq.id} — Six-frame translation")
+            row = {"id": seq.id}
             for frame_label, protein in results.items():
                 click.echo(f" Frame {frame_label}: {protein}")
+                row[f"frame_{frame_label}"] = protein
+            if export_data is not None:
+                export_data.append(row)
         else:
             protein = translator.translate(seq, frame)
             click.echo(f">{seq.id} — Frame {frame}")
             click.echo(f"  {protein}")
+            if export_data is not None:
+                export_data.append({"id": seq.id, "frame": frame, "protein": protein})
         click.echo()
+    if output and export_data:
+        if export_format == "csv":
+            Exporter.to_csv(export_data, file_path=output)
+        elif export_format == "tsv":
+            Exporter.to_tsv(export_data, file_path=output)
+        elif export_format == "json":
+            Exporter.to_json(export_data, file_path=output)
+        click.echo(f"Results saved to {output}")
+
+
 
 @main.command()
 @click.option("--file", "-f", default=None, help="Path to the FASTA file")
@@ -218,7 +239,10 @@ def translate(file, string, strict, strict_file, strict_seq, frame, six_frames):
 @click.option("--strict-seq", is_flag=True, help="Fail on invalid sequence characters")
 @click.option("--min-length", default=0, help="Mininmum length for open reading frames")
 @click.option("--overlap", is_flag = True, help="Overlapping ORFs")
-def orf(file, string, strict, strict_file, strict_seq, min_length, overlap):
+@click.option("--format", "export_format", type=click.Choice(["orfs-to-csv", "tsv", "json"]), default="csv",
+              help="Export format: to csv, to tsv, to json, sequences to csv")
+@click.option("--output", "-o", default=None, help="Output file path (prints to stdout if not given)")
+def orf(file, string, strict, strict_file, strict_seq, min_length, overlap, export_format, output):
     """Find open reading frames in sequences."""
 
     if not file and not string:
@@ -242,6 +266,7 @@ def orf(file, string, strict, strict_file, strict_seq, min_length, overlap):
     if not sequences:
         raise click.ClickException("No valid sequences.")
     detector = ORFDetector(min_length=min_length)
+
     for seq in sequences:
         results = detector.find_orfs(seq)      
         click.echo(f">{seq.id} — ORFs found: {len(results)}")
