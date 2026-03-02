@@ -6,10 +6,61 @@ from bio_seq_v1.orf import ORF
 from bio_seq_v1.orf import ORFDetector
 from bio_seq_v1.motif_search import MotifFinder
 from bio_seq_v1.export import Exporter
+from bio_seq_v1.config import Config
 import rich_click as click
+import yaml
+from pathlib import Path
 click.rich_click.USE_RICH_MARKUP = True
 click.rich_click.GROUP_ARGUMENTS_OPTIONS = True
 click.rich_click.STYLE_COMMANDS_TABLE_COLUMN_WIDTH_RATIO = (1, 2)
+
+@click.group()
+@click.pass_context
+def main(ctx):
+    """BioSeq — A bioinformatics sequence analysis toolkit."""
+    ctx.obj = Config()  
+@main.command()
+@click.option("--init", "do_init", is_flag=True, help="Interactively set up your config")
+@click.option("--show", is_flag=True, help="Show current configuration")
+@click.option("--get", "get_key", default=None, help="Get a config value (e.g., motif.default_k)")
+@click.option("--set", "set_key", nargs=2, default=None, help="Set a config value (e.g., --set motif.default_k 6)")
+@click.option("--reset", is_flag=True, help="Reset config to defaults")
+@click.pass_context
+def config(ctx, do_init, show, get_key, set_key, reset):
+    """View or modify configuration settings."""
+    cfg = ctx.obj
+    try:
+        if do_init:
+            cfg.create_config(None) 
+        elif show:
+            click.echo(yaml.dump(cfg.config, default_flow_style=False))
+        elif get_key:
+            value = cfg.get_config(get_key)
+            if value is None:
+                raise click.ClickException(f"Key '{get_key}' not found")
+            click.echo(f"{get_key} = {value}")
+        elif set_key:
+            key, value = set_key
+            if value.lower() == "true":
+                value = True
+            elif value.lower() == "false":
+                value = False
+            elif value.isdigit():
+                value = int(value)
+            cfg.set_config(key, value)
+            output_path = Path.home() / '.bio_seq' / 'config.yaml'
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(output_path, 'w') as f:
+                yaml.dump(cfg.config, f, default_flow_style=False)
+            click.echo(f"Set {key} = {value}")
+            click.echo(f"Saved to {output_path}")
+        elif reset:
+            cfg.config = cfg._get_defaults()
+            click.echo("Config reset to defaults")
+        else:
+            click.echo("Use --show, --get, --set, --init, or --reset")
+    except ValueError as e:
+        raise click.ClickException(str(e))
 
 
 def print_sequence_lengths_formatted(sequences):
@@ -78,15 +129,6 @@ def print_summary(sequences):
     print("BASE COMPOSITION")
     print_base_count(sequences)
 
-
-@click.group()
-def main():
-    """
-    Command-line interface entry point.
-
-    Parses arguments to specify FASTA input source and analysis options,
-    and prints the requested sequence information.
-    """
 @main.command()
 @click.option("--file", "-f", default=None, help="Path to the FASTA file")
 @click.option("--string", "-s", default=None, help="FASTA-formatted string")
@@ -164,7 +206,7 @@ def stats(file, string, strict, strict_file, strict_seq, length, gc, revcomp, ba
                 Exporter.to_json(export_data, file_path=output)
             click.echo(f"Results saved to {output}")
     except ValueError as e:
-        click.ClickException(str(e))
+        raise click.ClickException(str(e))
 
 
 
@@ -241,7 +283,7 @@ def translate(file, string, strict, strict_file, strict_seq, frame, six_frames, 
                 Exporter.to_fasta(fasta_seqs, file_path=output)
             click.echo(f"Results saved to {output}")
     except ValueError as e:
-        click.ClickException(str(e))
+        raise click.ClickException(str(e))
 
 
 
