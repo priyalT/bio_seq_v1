@@ -247,8 +247,8 @@ def translate(file, string, strict, strict_file, strict_seq, frame, six_frames, 
 @click.option("--strict-seq", is_flag=True, help="Fail on invalid sequence characters")
 @click.option("--min-length", default=0, help="Mininmum length for open reading frames")
 @click.option("--overlap", is_flag = True, help="Overlapping ORFs")
-@click.option("--format", "export_format", type=click.Choice(["csv", "tsv", "json"]), default="csv",
-              help="Export format: to csv, to tsv, to json")
+@click.option("--format", "export_format", type=click.Choice(["csv", "tsv", "json", "fasta"]), default="csv",
+              help="Export format: to csv, to tsv, to json, to fasta")
 @click.option("--output", "-o", default=None, help="Output file path (prints to stdout if not given)")
 def orf(file, string, strict, strict_file, strict_seq, min_length, overlap, export_format, output):
     """Find open reading frames in sequences."""
@@ -273,7 +273,6 @@ def orf(file, string, strict, strict_file, strict_seq, min_length, overlap, expo
     if not sequences:
         raise click.ClickException("No valid sequences.")
     detector = ORFDetector(min_length=min_length)
-
     all_orfs = []
     for seq in sequences:
         results = detector.find_orfs(seq)      
@@ -297,6 +296,9 @@ def orf(file, string, strict, strict_file, strict_seq, min_length, overlap, expo
         elif export_format == "json":
             data = [o.to_dict() for o in all_orfs]
             Exporter.to_json(data, file_path=output)
+        elif export_format == "fasta":
+            fasta_seqs = [sequence(f"{o.seq_id}_orf_{o.start}_{o.end}", o.protein) for o in all_orfs]
+            Exporter.to_fasta(fasta_seqs, file_path=output)
         click.echo(f"Results saved to {output}")
 
 
@@ -311,7 +313,10 @@ def orf(file, string, strict, strict_file, strict_seq, min_length, overlap, expo
 @click.option("--k", default=3, help="Mininmum length for motif")
 @click.option("--mismatch", "-m", default=0, help="Numer of mismatches allowed")
 @click.option("--pattern", "-p", required=True, help="Motif pattern to search for (e.g., TATAAA)")
-def motif(file, string, strict, strict_file, strict_seq, mode, k, mismatch, pattern):
+@click.option("--format", "export_format", type=click.Choice(["csv", "tsv", "json"]), default="csv",
+              help="Export format: to csv, to tsv, to json")
+@click.option("--output", "-o", default=None, help="Output file path (prints to stdout if not given)")
+def motif(file, string, strict, strict_file, strict_seq, mode, k, mismatch, pattern, export_format, output):
     """Find motifs in sequences."""
 
     if not file and not string:
@@ -336,22 +341,35 @@ def motif(file, string, strict, strict_file, strict_seq, mode, k, mismatch, patt
         raise click.ClickException("No valid sequences.")
     
     finder = MotifFinder(k=k)
-
+    all_motifs = []
     if mode == 'single':
         for seq in sequences:
             single_strand = finder.search_single(seq, pattern, mismatch)
             click.echo(f">{seq.id} — Motifs on single strand found: {len(single_strand)}")
             for found_motif in single_strand: 
                 click.echo(f"  position = {found_motif.position}, matched sequence = {found_motif.matched_seq}, strand attributes = {found_motif.strand_attributes}")
+            all_motifs.extend(single_strand)
     if mode == 'both':
         for seq in sequences:
             double_strand = finder.search_both_strands(seq, pattern, mismatch)    
             click.echo(f">{seq.id} — Motifs on both strands found: {len(double_strand)}")
             for found_motif in double_strand: 
                 click.echo(f"  position = {found_motif.position}, matched sequence = {found_motif.matched_seq}, strand attributes = {found_motif.strand_attributes}")
+            all_motifs.extend(double_strand)
     if mode == 'search-all':
         fasta_motifs = finder.search_fasta(sequences, pattern, mismatch)
         click.echo(f"Motifs found across all sequences: {len(fasta_motifs)}")
         for found_motif in fasta_motifs: 
             click.echo(f"  position = {found_motif.position}, matched sequence = {found_motif.matched_seq}, strand attributes = {found_motif.strand_attributes}")
+        all_motifs.extend(fasta_motifs)
+    if output and all_motifs:
+        if export_format == "csv":
+            Exporter.motifs_to_csv(all_motifs, file_path=output)
+        elif export_format == "tsv":
+            data = [o.to_dict() for o in all_motifs]
+            Exporter.to_tsv(data, file_path=output)
+        elif export_format == "json":
+            data = [o.to_dict() for o in all_motifs]
+            Exporter.to_json(data, file_path=output)
+
 
