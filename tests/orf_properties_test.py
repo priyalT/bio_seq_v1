@@ -18,6 +18,7 @@ def count_orfs_in_protein(protein: str) -> int:
         i += 1
     return count
 
+
 @given(st.text(alphabet="ACGT", min_size=3))
 def test_orf_detection_completeness(dna):
     detector = ORFDetector(min_length=0)
@@ -32,12 +33,14 @@ def test_orf_detection_completeness(dna):
 
     assert len(detected_orfs) == expected_count
 
+
 @given(st.text(alphabet="ACGT", min_size=3))
 def test_orf_length_filtering(dna):
     detector = ORFDetector(min_length=3)
     detected_orfs = detector.find_orfs(dna)
     for orf in detected_orfs:
         assert orf.length >= detector.min_length
+
 
 @given(st.text(alphabet="ACGT", min_size=3))
 def test_orf_metadata_completeness(dna):
@@ -50,7 +53,7 @@ def test_orf_metadata_completeness(dna):
         hasattr(orf, "strand")
         hasattr(orf, "protein")
         hasattr(orf, "length")
-        
+
         assert isinstance(orf.start, int)
         assert isinstance(orf.end, int)
         assert isinstance(orf.frame, int)
@@ -61,9 +64,9 @@ def test_orf_metadata_completeness(dna):
         assert orf.length == orf.end - orf.start + 1
         assert orf.start >= 0
         assert orf.end >= orf.start
-        assert orf.frame in {0,1,2}
+        assert orf.frame in {0, 1, 2}
         assert orf.strand in {"+", "-"}
-        assert len(orf.protein) > 0 
+        assert len(orf.protein) > 0
         assert "*" not in orf.protein
         assert orf.protein[0] == "M"
 
@@ -75,9 +78,10 @@ def test_orf_metadata_completeness(dna):
         assert d["start"] == orf.start
         assert d["length"] == orf.length
 
-@given(st.text(alphabet="ACGT", min_size = 3))
+
+@given(st.text(alphabet="ACGT", min_size=3))
 def test_orf_overlap(dna):
-    detector = ORFDetector(min_length = 3)
+    detector = ORFDetector(min_length=3)
     detected_orfs = detector.find_orfs(dna)
     overlapping_pairs = detector.overlapping_orfs(detected_orfs)
     for orf1, orf2 in overlapping_pairs:

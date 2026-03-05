@@ -45,7 +45,6 @@ class FASTAParser:
         if invalid:
             msg = f"Invalid character(s) at line {linenum}: {''.join(sorted(invalid))}"
             raise ValueError(msg)
-        
 
     def _parse_lines(self, lines: Iterable[str]):
         seq = []

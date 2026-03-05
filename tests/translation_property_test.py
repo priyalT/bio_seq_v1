@@ -3,10 +3,12 @@ from bio_seq_v1.fasta import FASTAParser
 from bio_seq_v1.stats import sequence
 from bio_seq_v1.translator import Translator
 from hypothesis import given, strategies as st
+
 valid_amino_acids = set("ACDEFGHIKLMNPQRSTVWY*X")
 stop_codons = {"TAA", "TAG", "TGA"}
 
-@given(st.text(alphabet = "ACGT", min_size = 3))
+
+@given(st.text(alphabet="ACGT", min_size=3))
 def test_genetic_code_compliance(seq):
     parser = FASTAParser()
     parser.parse_string(seq)
@@ -14,6 +16,7 @@ def test_genetic_code_compliance(seq):
     protein = translator.translate(parser.sequences[0], frame=0)
     for aa in protein:
         assert aa in valid_amino_acids
+
 
 @given(st.text(alphabet="ACGT", min_size=6))
 def test_frame_translation_slicing(seq):
@@ -23,9 +26,10 @@ def test_frame_translation_slicing(seq):
 
     s = parser.sequences[0].sequence
     assert translator.translate(s, frame=1) == translator.translate(s[1:], frame=0)
-    assert translator.translate(s, frame=2) == translator.translate(s[2:], frame=0)    
-    
-@given(st.text(alphabet = "ACGT", min_size = 1))
+    assert translator.translate(s, frame=2) == translator.translate(s[2:], frame=0)
+
+
+@given(st.text(alphabet="ACGT", min_size=1))
 def test_incomplete_codon_handling(seq):
     parser = FASTAParser()
     parser.parse_string(seq)
@@ -35,35 +39,34 @@ def test_incomplete_codon_handling(seq):
     assert len(protein) == expected_len
 
 
-@given(st.text(alphabet = "ACGT", min_size = 3))
+@given(st.text(alphabet="ACGT", min_size=3))
 def test_stop_codon_representation(seq):
     parser = FASTAParser()
     parser.parse_string(seq)
     translator = Translator()
-    protein = translator.translate(parser.sequences[0], frame = 0)
-    for i in range(0, len(seq)-2, 3):
-        codons = seq[i:i+3]
+    protein = translator.translate(parser.sequences[0], frame=0)
+    for i in range(0, len(seq) - 2, 3):
+        codons = seq[i : i + 3]
     for codon, aa in zip(codons, protein):
         if codon in stop_codons:
             assert aa == "*"
 
-@given(st.text(alphabet = "ACGTNRYSWKMBDHV", min_size = 3))
+
+@given(st.text(alphabet="ACGTNRYSWKMBDHV", min_size=3))
 def test_ambiguous_code_handling(seq):
     parser = FASTAParser()
     parser.parse_string(seq)
     translator = Translator()
-    protein = translator.translate(parser.sequences[0], frame = 0)
-    codons = [
-        seq[i:i+3]
-        for i in range(0, len(seq)-2, 3)
-    ]
+    protein = translator.translate(parser.sequences[0], frame=0)
+    codons = [seq[i : i + 3] for i in range(0, len(seq) - 2, 3)]
     for codon, aa in zip(codons, protein):
         if codon not in translator.genetic_code:
             assert aa == "X"
         else:
             assert aa in valid_amino_acids
 
-@given(st.text(alphabet = "ACGTNRYSWKMBDHV", min_size = 3))
+
+@given(st.text(alphabet="ACGTNRYSWKMBDHV", min_size=3))
 def test_six_frame_translation_completeness(seq):
     parser = FASTAParser()
     parser.parse_string(seq)
@@ -75,4 +78,3 @@ def test_six_frame_translation_completeness(seq):
         assert translator.translate(dna, frame=frame) == six_frame[f"+{frame+1}"]
     for frame in range(3):
         assert translator.translate(rev, frame=frame) == six_frame[f"-{frame+1}"]
-

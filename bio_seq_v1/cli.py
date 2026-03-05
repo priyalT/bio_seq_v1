@@ -10,20 +10,34 @@ from bio_seq_v1.config import Config
 import rich_click as click
 import yaml
 from pathlib import Path
+
 click.rich_click.USE_RICH_MARKUP = True
 click.rich_click.GROUP_ARGUMENTS_OPTIONS = True
 click.rich_click.STYLE_COMMANDS_TABLE_COLUMN_WIDTH_RATIO = (1, 2)
+
 
 @click.group()
 @click.pass_context
 def main(ctx):
     """BioSeq — A bioinformatics sequence analysis toolkit."""
-    ctx.obj = Config()  
+    ctx.obj = Config()
+
+
 @main.command()
-@click.option("--init", "do_init", is_flag=True, help="Interactively set up your config")
+@click.option(
+    "--init", "do_init", is_flag=True, help="Interactively set up your config"
+)
 @click.option("--show", is_flag=True, help="Show current configuration")
-@click.option("--get", "get_key", default=None, help="Get a config value (e.g., motif.default_k)")
-@click.option("--set", "set_key", nargs=2, default=None, help="Set a config value (e.g., --set motif.default_k 6)")
+@click.option(
+    "--get", "get_key", default=None, help="Get a config value (e.g., motif.default_k)"
+)
+@click.option(
+    "--set",
+    "set_key",
+    nargs=2,
+    default=None,
+    help="Set a config value (e.g., --set motif.default_k 6)",
+)
 @click.option("--reset", is_flag=True, help="Reset config to defaults")
 @click.pass_context
 def config(ctx, do_init, show, get_key, set_key, reset):
@@ -31,7 +45,7 @@ def config(ctx, do_init, show, get_key, set_key, reset):
     cfg = ctx.obj
     try:
         if do_init:
-            cfg.create_config(None) 
+            cfg.create_config(None)
         elif show:
             click.echo(yaml.dump(cfg.config, default_flow_style=False))
         elif get_key:
@@ -48,9 +62,9 @@ def config(ctx, do_init, show, get_key, set_key, reset):
             elif value.isdigit():
                 value = int(value)
             cfg.set_config(key, value)
-            output_path = Path.home() / '.bio_seq' / 'config.yaml'
+            output_path = Path.home() / ".bio_seq" / "config.yaml"
             output_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(output_path, 'w') as f:
+            with open(output_path, "w") as f:
                 yaml.dump(cfg.config, f, default_flow_style=False)
             click.echo(f"Set {key} = {value}")
             click.echo(f"Saved to {output_path}")
@@ -73,6 +87,7 @@ def print_sequence_lengths_formatted(sequences):
     table = [[s.id, s.sequence_length()] for s in sequences]
     print(tabulate(table, headers=["Sequence ID", "Length"], tablefmt="grid"))
 
+
 def print_gc_content_table(sequences):
     """
     Print a formatted table of sequence IDs and their GC content percentages.
@@ -82,6 +97,7 @@ def print_gc_content_table(sequences):
     """
     table = [[s.id, f"{s.gc_content():.2f}%"] for s in sequences]
     print(tabulate(table, headers=["Sequence", "GC%"], tablefmt="grid"))
+
 
 def print_revcomp(sequences):
     """
@@ -94,6 +110,7 @@ def print_revcomp(sequences):
         print(f">{s.id} reverse complement")
         print(s.rev_complement())
         print("-" * 30)
+
 
 def print_base_count(sequences):
     """
@@ -110,6 +127,7 @@ def print_base_count(sequences):
         table.append(row)
     headers = ["Sequence"] + bases_present
     print(tabulate(table, headers=headers, tablefmt="grid"))
+
 
 def print_summary(sequences):
     """
@@ -129,6 +147,7 @@ def print_summary(sequences):
     print("BASE COMPOSITION")
     print_base_count(sequences)
 
+
 @main.command()
 @click.option("--file", "-f", default=None, help="Path to the FASTA file")
 @click.option("--string", "-s", default=None, help="FASTA-formatted string")
@@ -140,10 +159,33 @@ def print_summary(sequences):
 @click.option("--revcomp", "-rc", is_flag=True, help="Compute reverse complements")
 @click.option("--basecount", "-b", is_flag=True, help="Compute base counts")
 @click.option("--summary", is_flag=True, help="Print full summary")
-@click.option("--format", "export_format", type=click.Choice(["csv", "tsv", "json"]), default="csv",
-              help="Export format: to csv, to tsv, to json, sequences to csv")
-@click.option("--output", "-o", default=None, help="Output file path (prints to stdout if not given)")
-def stats(file, string, strict, strict_file, strict_seq, length, gc, revcomp, basecount, summary, output, export_format):
+@click.option(
+    "--format",
+    "export_format",
+    type=click.Choice(["csv", "tsv", "json"]),
+    default="csv",
+    help="Export format: to csv, to tsv, to json, sequences to csv",
+)
+@click.option(
+    "--output",
+    "-o",
+    default=None,
+    help="Output file path (prints to stdout if not given)",
+)
+def stats(
+    file,
+    string,
+    strict,
+    strict_file,
+    strict_seq,
+    length,
+    gc,
+    revcomp,
+    basecount,
+    summary,
+    output,
+    export_format,
+):
     """Analyze sequences — lengths, GC content, base composition."""
 
     if not file and not string:
@@ -151,10 +193,7 @@ def stats(file, string, strict, strict_file, strict_seq, length, gc, revcomp, ba
     if file and string:
         raise click.UsageError("Cannot use both --file and --string")
     fasta_parser = FASTAParser(
-        path=file,
-        strict=strict,
-        strict_file=strict_file,
-        strict_seq=strict_seq
+        path=file, strict=strict, strict_file=strict_file, strict_seq=strict_seq
     )
     try:
         if file:
@@ -209,19 +248,47 @@ def stats(file, string, strict, strict_file, strict_seq, length, gc, revcomp, ba
         raise click.ClickException(str(e))
 
 
-
 @main.command()
 @click.option("--file", "-f", default=None, help="Path to the FASTA file")
 @click.option("--string", "-s", default=None, help="FASTA-formatted string")
 @click.option("--strict", is_flag=True, help="Enable strict parsing")
 @click.option("--strict-file", is_flag=True, help="Enable strict file validation")
 @click.option("--strict-seq", is_flag=True, help="Fail on invalid sequence characters")
-@click.option("--frame", type = click.IntRange(0, 2), default=0, help="Frame for translation (0, 1, or 2)")
-@click.option("--six-frames", is_flag=True, help="Translate the parsed sequences in all six frames")
-@click.option("--format", "export_format", type=click.Choice(["csv", "tsv", "json", "fasta"]), default="csv",
-              help="Export format: to csv, to tsv, to json, to fasta")
-@click.option("--output", "-o", default=None, help="Output file path (prints to stdout if not given)")
-def translate(file, string, strict, strict_file, strict_seq, frame, six_frames, export_format, output):
+@click.option(
+    "--frame",
+    type=click.IntRange(0, 2),
+    default=0,
+    help="Frame for translation (0, 1, or 2)",
+)
+@click.option(
+    "--six-frames",
+    is_flag=True,
+    help="Translate the parsed sequences in all six frames",
+)
+@click.option(
+    "--format",
+    "export_format",
+    type=click.Choice(["csv", "tsv", "json", "fasta"]),
+    default="csv",
+    help="Export format: to csv, to tsv, to json, to fasta",
+)
+@click.option(
+    "--output",
+    "-o",
+    default=None,
+    help="Output file path (prints to stdout if not given)",
+)
+def translate(
+    file,
+    string,
+    strict,
+    strict_file,
+    strict_seq,
+    frame,
+    six_frames,
+    export_format,
+    output,
+):
     """Translate given sequence."""
 
     if not file and not string:
@@ -230,8 +297,7 @@ def translate(file, string, strict, strict_file, strict_seq, frame, six_frames, 
         raise click.UsageError("Cannot use both --file and --string")
 
     fasta_parser = FASTAParser(
-        path=file, strict=strict,
-        strict_file=strict_file, strict_seq=strict_seq
+        path=file, strict=strict, strict_file=strict_file, strict_seq=strict_seq
     )
     try:
         if file:
@@ -239,7 +305,7 @@ def translate(file, string, strict, strict_file, strict_seq, frame, six_frames, 
         else:
             fasta_parser.parse_string(string)
     except Exception as e:
-        click.echo(f"Parsing failed: {e}", err= True)
+        click.echo(f"Parsing failed: {e}", err=True)
         return
     sequences = fasta_parser.sequences
     if not sequences:
@@ -262,7 +328,9 @@ def translate(file, string, strict, strict_file, strict_seq, frame, six_frames, 
                 click.echo(f">{seq.id} — Frame {frame}")
                 click.echo(f"  {protein}")
                 if export_data is not None:
-                    export_data.append({"id": seq.id, "frame": frame, "protein": protein})
+                    export_data.append(
+                        {"id": seq.id, "frame": frame, "protein": protein}
+                    )
             click.echo()
         if output and export_data:
             if export_format == "csv":
@@ -286,7 +354,6 @@ def translate(file, string, strict, strict_file, strict_seq, frame, six_frames, 
         raise click.ClickException(str(e))
 
 
-
 @main.command()
 @click.option("--file", "-f", default=None, help="Path to the FASTA file")
 @click.option("--string", "-s", default=None, help="FASTA-formatted string")
@@ -294,11 +361,31 @@ def translate(file, string, strict, strict_file, strict_seq, frame, six_frames, 
 @click.option("--strict-file", is_flag=True, help="Enable strict file validation")
 @click.option("--strict-seq", is_flag=True, help="Fail on invalid sequence characters")
 @click.option("--min-length", default=0, help="Mininmum length for open reading frames")
-@click.option("--overlap", is_flag = True, help="Overlapping ORFs")
-@click.option("--format", "export_format", type=click.Choice(["csv", "tsv", "json", "fasta"]), default="csv",
-              help="Export format: to csv, to tsv, to json, to fasta")
-@click.option("--output", "-o", default=None, help="Output file path (prints to stdout if not given)")
-def orf(file, string, strict, strict_file, strict_seq, min_length, overlap, export_format, output):
+@click.option("--overlap", is_flag=True, help="Overlapping ORFs")
+@click.option(
+    "--format",
+    "export_format",
+    type=click.Choice(["csv", "tsv", "json", "fasta"]),
+    default="csv",
+    help="Export format: to csv, to tsv, to json, to fasta",
+)
+@click.option(
+    "--output",
+    "-o",
+    default=None,
+    help="Output file path (prints to stdout if not given)",
+)
+def orf(
+    file,
+    string,
+    strict,
+    strict_file,
+    strict_seq,
+    min_length,
+    overlap,
+    export_format,
+    output,
+):
     """Find open reading frames in sequences."""
 
     if not file and not string:
@@ -306,8 +393,7 @@ def orf(file, string, strict, strict_file, strict_seq, min_length, overlap, expo
     if file and string:
         raise click.UsageError("Cannot use both --file and --string")
     fasta_parser = FASTAParser(
-        path=file, strict=strict,
-        strict_file=strict_file, strict_seq=strict_seq
+        path=file, strict=strict, strict_file=strict_file, strict_seq=strict_seq
     )
     try:
         if file:
@@ -315,7 +401,7 @@ def orf(file, string, strict, strict_file, strict_seq, min_length, overlap, expo
         else:
             fasta_parser.parse_string(string)
     except Exception as e:
-        click.echo(f"Parsing failed: {e}", err= True)
+        click.echo(f"Parsing failed: {e}", err=True)
         return
     sequences = fasta_parser.sequences
     if not sequences:
@@ -324,17 +410,21 @@ def orf(file, string, strict, strict_file, strict_seq, min_length, overlap, expo
     all_orfs = []
     try:
         for seq in sequences:
-            results = detector.find_orfs(seq)      
+            results = detector.find_orfs(seq)
             click.echo(f">{seq.id} — ORFs found: {len(results)}")
             for found_orf in results:
-                click.echo(f"  start={found_orf.start}, end={found_orf.end}, protein={found_orf.protein}")
+                click.echo(
+                    f"  start={found_orf.start}, end={found_orf.end}, protein={found_orf.protein}"
+                )
             all_orfs.extend(results)
-            if overlap: 
+            if overlap:
                 overlaps = detector.overlapping_orfs(results)
                 if overlaps:
                     click.echo(f"  Overlapping pairs: {len(overlaps)}")
                     for orf1, orf2 in overlaps:
-                        click.echo(f"    {orf1.start}-{orf1.end} ↔ {orf2.start}-{orf2.end}")
+                        click.echo(
+                            f"    {orf1.start}-{orf1.end} ↔ {orf2.start}-{orf2.end}"
+                        )
             click.echo()
         if output and all_orfs:
             if export_format == "csv":
@@ -346,11 +436,15 @@ def orf(file, string, strict, strict_file, strict_seq, min_length, overlap, expo
                 data = [o.to_dict() for o in all_orfs]
                 Exporter.to_json(data, file_path=output)
             elif export_format == "fasta":
-                fasta_seqs = [sequence(f"{o.seq_id}_orf_{o.start}_{o.end}", o.protein) for o in all_orfs]
+                fasta_seqs = [
+                    sequence(f"{o.seq_id}_orf_{o.start}_{o.end}", o.protein)
+                    for o in all_orfs
+                ]
                 Exporter.to_fasta(fasta_seqs, file_path=output)
             click.echo(f"Results saved to {output}")
     except ValueError as e:
         raise click.ClickException(str(e))
+
 
 @main.command()
 @click.option("--file", "-f", default=None, help="Path to the FASTA file")
@@ -358,15 +452,43 @@ def orf(file, string, strict, strict_file, strict_seq, min_length, overlap, expo
 @click.option("--strict", is_flag=True, help="Enable strict parsing")
 @click.option("--strict-file", is_flag=True, help="Enable strict file validation")
 @click.option("--strict-seq", is_flag=True, help="Fail on invalid sequence characters")
-@click.option("--mode", type=click.Choice(["single", "both", "search-all"]), default="single",
-              help="Search mode: single strand, both strands, or all sequences")
+@click.option(
+    "--mode",
+    type=click.Choice(["single", "both", "search-all"]),
+    default="single",
+    help="Search mode: single strand, both strands, or all sequences",
+)
 @click.option("--k", default=3, help="Mininmum length for motif")
 @click.option("--mismatch", "-m", default=0, help="Numer of mismatches allowed")
-@click.option("--pattern", "-p", required=True, help="Motif pattern to search for (e.g., TATAAA)")
-@click.option("--format", "export_format", type=click.Choice(["csv", "tsv", "json"]), default="csv",
-              help="Export format: to csv, to tsv, to json")
-@click.option("--output", "-o", default=None, help="Output file path (prints to stdout if not given)")
-def motif(file, string, strict, strict_file, strict_seq, mode, k, mismatch, pattern, export_format, output):
+@click.option(
+    "--pattern", "-p", required=True, help="Motif pattern to search for (e.g., TATAAA)"
+)
+@click.option(
+    "--format",
+    "export_format",
+    type=click.Choice(["csv", "tsv", "json"]),
+    default="csv",
+    help="Export format: to csv, to tsv, to json",
+)
+@click.option(
+    "--output",
+    "-o",
+    default=None,
+    help="Output file path (prints to stdout if not given)",
+)
+def motif(
+    file,
+    string,
+    strict,
+    strict_file,
+    strict_seq,
+    mode,
+    k,
+    mismatch,
+    pattern,
+    export_format,
+    output,
+):
     """Find motifs in sequences."""
 
     if not file and not string:
@@ -375,8 +497,7 @@ def motif(file, string, strict, strict_file, strict_seq, mode, k, mismatch, patt
         raise click.UsageError("Cannot use both --file and --string")
 
     fasta_parser = FASTAParser(
-        path=file, strict=strict,
-        strict_file=strict_file, strict_seq=strict_seq
+        path=file, strict=strict, strict_file=strict_file, strict_seq=strict_seq
     )
     try:
         if file:
@@ -384,34 +505,44 @@ def motif(file, string, strict, strict_file, strict_seq, mode, k, mismatch, patt
         else:
             fasta_parser.parse_string(string)
     except Exception as e:
-        click.echo(f"Parsing failed: {e}", err= True)
+        click.echo(f"Parsing failed: {e}", err=True)
         return
     sequences = fasta_parser.sequences
     if not sequences:
         raise click.ClickException("No valid sequences.")
-    
+
     finder = MotifFinder(k=k)
     all_motifs = []
     try:
-        if mode == 'single':
+        if mode == "single":
             for seq in sequences:
                 single_strand = finder.search_single(seq, pattern, mismatch)
-                click.echo(f">{seq.id} — Motifs on single strand found: {len(single_strand)}")
-                for found_motif in single_strand: 
-                    click.echo(f"  position = {found_motif.position}, matched sequence = {found_motif.matched_seq}, strand attributes = {found_motif.strand_attributes}")
+                click.echo(
+                    f">{seq.id} — Motifs on single strand found: {len(single_strand)}"
+                )
+                for found_motif in single_strand:
+                    click.echo(
+                        f"  position = {found_motif.position}, matched sequence = {found_motif.matched_seq}, strand attributes = {found_motif.strand_attributes}"
+                    )
                 all_motifs.extend(single_strand)
-        if mode == 'both':
+        if mode == "both":
             for seq in sequences:
-                double_strand = finder.search_both_strands(seq, pattern, mismatch)    
-                click.echo(f">{seq.id} — Motifs on both strands found: {len(double_strand)}")
-                for found_motif in double_strand: 
-                    click.echo(f"  position = {found_motif.position}, matched sequence = {found_motif.matched_seq}, strand attributes = {found_motif.strand_attributes}")
+                double_strand = finder.search_both_strands(seq, pattern, mismatch)
+                click.echo(
+                    f">{seq.id} — Motifs on both strands found: {len(double_strand)}"
+                )
+                for found_motif in double_strand:
+                    click.echo(
+                        f"  position = {found_motif.position}, matched sequence = {found_motif.matched_seq}, strand attributes = {found_motif.strand_attributes}"
+                    )
                 all_motifs.extend(double_strand)
-        if mode == 'search-all':
+        if mode == "search-all":
             fasta_motifs = finder.search_fasta(sequences, pattern, mismatch)
             click.echo(f"Motifs found across all sequences: {len(fasta_motifs)}")
-            for found_motif in fasta_motifs: 
-                click.echo(f"  position = {found_motif.position}, matched sequence = {found_motif.matched_seq}, strand attributes = {found_motif.strand_attributes}")
+            for found_motif in fasta_motifs:
+                click.echo(
+                    f"  position = {found_motif.position}, matched sequence = {found_motif.matched_seq}, strand attributes = {found_motif.strand_attributes}"
+                )
             all_motifs.extend(fasta_motifs)
         if output and all_motifs:
             if export_format == "csv":
@@ -424,6 +555,3 @@ def motif(file, string, strict, strict_file, strict_seq, mode, k, mismatch, patt
                 Exporter.to_json(data, file_path=output)
     except ValueError as e:
         raise click.ClickException(str(e))
-
-
-

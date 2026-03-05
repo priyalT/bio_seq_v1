@@ -1,9 +1,10 @@
 import warnings
 from bio_seq_v1.export import Exporter
 
-class sequence():
+
+class sequence:
     """
-    Represents a biological sequence (DNA/RNA) with utility methods 
+    Represents a biological sequence (DNA/RNA) with utility methods
     for analysis such as length, base count, GC content, and reverse complement.
 
     Attributes:
@@ -11,13 +12,28 @@ class sequence():
         sequence (str): Uppercase string of sequence bases.
     """
 
-    revcomp_dict = { 
-    "A":"T", "T":"A", "G":"C", "C":"G", "U":"A",
-    "R":"Y", "Y":"R", "S":"S", "W":"W",
-    "K":"M", "M":"K", "B":"V", "D":"H",
-    "H":"D", "V":"B", "N":"N", "-": "-", ".": "."}
-    
-    valid = "ACGTUNRYSWKMBDHV-." 
+    revcomp_dict = {
+        "A": "T",
+        "T": "A",
+        "G": "C",
+        "C": "G",
+        "U": "A",
+        "R": "Y",
+        "Y": "R",
+        "S": "S",
+        "W": "W",
+        "K": "M",
+        "M": "K",
+        "B": "V",
+        "D": "H",
+        "H": "D",
+        "V": "B",
+        "N": "N",
+        "-": "-",
+        ".": ".",
+    }
+
+    valid = "ACGTUNRYSWKMBDHV-."
 
     def __init__(self, id, sequence):
         """
@@ -30,29 +46,30 @@ class sequence():
         Raises:
             ValueError: If the sequence is empty or contains invalid characters.
         """
-        
-        if not sequence: 
-             raise ValueError(f"Sequence for ID '{id}' is empty")
-        invalid_chars = set(sequence.upper())-set(self.valid) 
-        if invalid_chars: 
-             raise ValueError(f"Sequence '{id}' contains invalid characters: {invalid_chars}")
-        self.id = id 
-        self.sequence = sequence.upper()
-        
-    def to_dict(self):
-         return{
-              "id" : self.id,
-              "length" : self.sequence_length(),
-              "gc content": self.gc_content(),
-              "sequence": self.sequence,
-              "reverse complement": self.rev_complement()
-         }
-         
-    def __getitem__(self, index):
-         return self.sequence[index]
-    
 
-    def sequence_length(self): 
+        if not sequence:
+            raise ValueError(f"Sequence for ID '{id}' is empty")
+        invalid_chars = set(sequence.upper()) - set(self.valid)
+        if invalid_chars:
+            raise ValueError(
+                f"Sequence '{id}' contains invalid characters: {invalid_chars}"
+            )
+        self.id = id
+        self.sequence = sequence.upper()
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "length": self.sequence_length(),
+            "gc content": self.gc_content(),
+            "sequence": self.sequence,
+            "reverse complement": self.rev_complement(),
+        }
+
+    def __getitem__(self, index):
+        return self.sequence[index]
+
+    def sequence_length(self):
         """
         Return the length of the sequence.
 
@@ -60,10 +77,10 @@ class sequence():
             int: Number of bases in the sequence.
         """
 
-        return len(self.sequence) 
-    
+        return len(self.sequence)
+
     def base_count(self):
-            """
+        """
         Count the occurrences of each valid base in the sequence.
 
         Returns:
@@ -72,14 +89,16 @@ class sequence():
         Notes:
             If an invalid character is present, a warning is issued.
         """
-            counts = {b:0 for b in self.valid} 
-            for b in self.sequence: 
-                if b in counts:
-                    counts[b] += 1
-                else:
-                     warnings.warn(f"Invalid character in id: '{self.id}' and sequence: '{self.sequence}")
-            return counts 
-    
+        counts = {b: 0 for b in self.valid}
+        for b in self.sequence:
+            if b in counts:
+                counts[b] += 1
+            else:
+                warnings.warn(
+                    f"Invalid character in id: '{self.id}' and sequence: '{self.sequence}"
+                )
+        return counts
+
     def gc_content(self):
         """
         Calculate the GC content percentage of the sequence.
@@ -90,13 +109,13 @@ class sequence():
         Raises:
             ValueError: If the sequence contains no valid bases for calculation.
         """
-        if not self.sequence: 
-             return 0.0 
-        g = self.sequence.count("G") 
-        c = self.sequence.count("C") 
-        total = self.sequence_length() 
-        return ((g+c)/total)*100 
-    
+        if not self.sequence:
+            return 0.0
+        g = self.sequence.count("G")
+        c = self.sequence.count("C")
+        total = self.sequence_length()
+        return ((g + c) / total) * 100
+
     def rev_complement(self):
         """
         Compute the reverse complement of the sequence.
@@ -111,10 +130,5 @@ class sequence():
         try:
             complement = "".join(self.revcomp_dict[b] for b in reverse)
         except KeyError as e:
-             raise ValueError(f"Invalid base for reverse complement: {e.args[0]}")
+            raise ValueError(f"Invalid base for reverse complement: {e.args[0]}")
         return complement
-
-
-
-         
-         
