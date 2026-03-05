@@ -30,3 +30,5 @@ env/
 .DS_Store
 
 .hypothesis/
+
+.ruff_cache

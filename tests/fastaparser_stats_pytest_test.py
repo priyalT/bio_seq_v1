@@ -1,8 +1,15 @@
 from bio_seq_v1.stats import sequence
 from bio_seq_v1.fasta import FASTAParser
+from pathlib import Path
 
-fasta_seq = "/Users/priyaltripathi/bio_seq_v1/tests/data/tiny.fasta"
-single_seq = "/Users/priyaltripathi/bio_seq_v1/tests/data/single.fasta"
+TEST_DIR = Path(__file__).parent
+DATA_DIR = TEST_DIR / "data"
+
+tiny_fasta = DATA_DIR / "tiny.fasta"
+single_fasta = DATA_DIR / "single.fasta"
+
+fasta_seq = tiny_fasta
+single_seq = single_fasta
 
 
 def test_fasta_parser():
