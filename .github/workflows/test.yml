@@ -32,6 +32,8 @@ jobs:
       run: pytest --cov=bio_seq_v1 --cov-branch --cov-report=xml
 
     - name: Upload coverage reports to Codecov
+      if: matrix.python-version == '3.10'
       uses: codecov/codecov-action@v5
       with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage.xml
