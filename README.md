@@ -7,8 +7,7 @@
 ![Tests](https://github.com/priyalT/bio_seq-v1-/actions/workflows/test.yml/badge.svg)
 ![Lint](https://github.com/priyalT/bio_seq-v1-/actions/workflows/lint.yml/badge.svg)
 ![Docker](https://github.com/priyalT/bio_seq-v1-/actions/workflows/docker.yml/badge.svg)
-[![codecov](https://codecov.io/gh/priyalT/bio_seq_v1/branch/main/graph/badge.svg)](https://codecov.io/gh/priyalT/bio_seq_v1)
-![Python](https://img.shields.io/badge/python-3.9%2B-blue)
+[![codecov](https://codecov.io/gh/priyalT/bio_seq_v1/graph/badge.svg?token=V0Q2YH84O2)](https://codecov.io/gh/priyalT/bio_seq_v1)![Python](https://img.shields.io/badge/python-3.9%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ---
