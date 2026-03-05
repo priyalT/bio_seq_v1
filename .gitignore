@@ -30,3 +30,6 @@ env/
 .DS_Store
 
 .hypothesis/
+work/
+.nextflow/
+.nextflow.log
