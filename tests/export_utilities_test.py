@@ -1,15 +1,11 @@
-import pytest
 import csv
-import io
 import json
-import sys
 import os
 import tempfile
 from bio_seq_v1.fasta import FASTAParser
 from bio_seq_v1.stats import sequence
 from bio_seq_v1.export import Exporter
 from hypothesis import given, strategies as st
-from bio_seq_v1.stats import sequence
 
 
 @given(st.text(alphabet="ACGTNRUYKMSWBDHV", min_size=1))

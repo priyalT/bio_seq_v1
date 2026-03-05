@@ -2,7 +2,6 @@ from tabulate import tabulate
 from bio_seq_v1.fasta import FASTAParser
 from bio_seq_v1.stats import sequence
 from bio_seq_v1.translator import Translator
-from bio_seq_v1.orf import ORF
 from bio_seq_v1.orf import ORFDetector
 from bio_seq_v1.motif_search import MotifFinder
 from bio_seq_v1.export import Exporter

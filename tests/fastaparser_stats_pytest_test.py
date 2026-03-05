@@ -1,4 +1,3 @@
-import pytest
 from bio_seq_v1.stats import sequence
 from bio_seq_v1.fasta import FASTAParser
 

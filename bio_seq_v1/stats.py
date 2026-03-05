@@ -1,5 +1,4 @@
 import warnings
-from bio_seq_v1.export import Exporter
 
 
 class sequence:
