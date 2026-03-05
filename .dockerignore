@@ -1,0 +1,11 @@
+.git
+.gitignore
+.pytest_cache
+.hypothesis
+.vscode
+__pycache__
+*.egg-info
+tests
+examples
+.DS_Store
+Dockerfile
