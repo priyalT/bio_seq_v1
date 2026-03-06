@@ -2,6 +2,7 @@ import pytest
 from pathlib import Path
 from bio_seq_v1.fasta import FASTAParser
 from hypothesis import given, strategies as st
+
 TEST_DIR = Path(__file__).parent
 DATA_DIR = TEST_DIR / "data"
 
@@ -103,7 +104,6 @@ def test_strict_mode_rejects_empty_file(tmp_path):
         FASTAParser.strict_mode(str(empty_file))
 
 
-
 def test_strict_file_rejects_directory(tmp_path):
     with pytest.raises(IsADirectoryError):
         FASTAParser(path=str(tmp_path), strict_file=True)
@@ -114,12 +114,10 @@ def test_strict_file_no_path():
         FASTAParser(path=None, strict_file=True)
 
 
-
 def test_parse_file_no_path_raises():
     parser = FASTAParser()
     with pytest.raises(ValueError, match="No file path"):
         parser.parse_file()
-
 
 
 def test_parse_string_no_header_adds_anonymous():
@@ -136,7 +134,6 @@ def test_parse_string_with_header_keeps_it():
     assert parser.sequences[0].id == "myseq"
 
 
-
 def test_empty_header_strict_raises():
     parser = FASTAParser(strict=True)
     with pytest.raises(ValueError, match="Empty FASTA header"):
@@ -147,7 +144,6 @@ def test_empty_header_nonstrict_records_error():
     parser = FASTAParser(strict=False)
     parser.parse_string(">\nATGC")
     assert any("empty" in e.lower() and "header" in e.lower() for e in parser.errors)
-
 
 
 def test_sequence_before_header_strict_raises():
@@ -162,7 +158,6 @@ def test_sequence_before_header_nonstrict_records_error():
     assert any("before any header" in e.lower() for e in parser.errors)
     assert len(parser.sequences) == 1
     assert parser.sequences[0].id == "seq1"
-
 
 
 def test_consecutive_headers_strict_raises():
@@ -192,7 +187,6 @@ def test_last_header_no_sequence_nonstrict():
     assert len(parser.sequences) == 1
 
 
-
 def test_strict_seq_invalid_char_raises():
     parser = FASTAParser(strict_seq=True)
     with pytest.raises(ValueError, match="Invalid character"):
@@ -203,7 +197,6 @@ def test_strict_seq_valid_chars_passes():
     parser = FASTAParser(strict_seq=True)
     parser.parse_string(">seq1\nATGCNRYSWKM")
     assert len(parser.sequences) == 1
-
 
 
 def test_empty_line_before_header_produces_warning():
@@ -222,7 +215,6 @@ def test_empty_line_in_sequence_nonstrict_records_error():
     parser = FASTAParser(strict=False)
     parser.parse_string(">seq1\nATGC\n\nGGGG")
     assert any("empty" in e.lower() for e in parser.errors)
-
 
 
 def test_get_report_success():
