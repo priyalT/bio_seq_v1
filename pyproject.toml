@@ -7,7 +7,7 @@ authors = [
     { name = "Priyal Tripathi", email = "priyaltripathi2910@gmail.com" }
 ]
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 license = { text="MIT" }
 keywords = ["bioinformatics", "sequence", "FASTA", "GC content", "reverse complement"]
 classifiers = [
