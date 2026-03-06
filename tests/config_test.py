@@ -80,12 +80,10 @@ def test_defaults_motif_values():
     assert motif["iupac_support"] is True
 
 
-
 def test_repr():
     cfg = Config()
     r = repr(cfg)
     assert "Config(loaded_from=" in r
-
 
 
 def test_get_config_simple_key():
@@ -124,7 +122,6 @@ def test_get_config_deep_nonexistent():
     cfg = Config()
     value = cfg.get_config("parsing.nonexistent.deep.key", default="nope")
     assert value == "nope"
-
 
 
 def test_set_config_existing_key():
@@ -226,7 +223,10 @@ def test_load_config_empty_file(tmp_path):
     cfg = Config()
     original_config = cfg.config.copy()
     cfg.load_config(str(empty_file))
-    assert cfg.config["parsing"]["strict_mode"] == original_config["parsing"]["strict_mode"]
+    assert (
+        cfg.config["parsing"]["strict_mode"]
+        == original_config["parsing"]["strict_mode"]
+    )
 
 
 def test_load_config_merges_not_replaces(tmp_path):
@@ -296,13 +296,10 @@ def test_validate_config_valid_values_unchanged():
     assert cfg.config["orf"]["min_length"] == 100
 
 
-
-
 def test_find_config_file_returns_none_when_no_file():
     cfg = Config()
     result = cfg._find_config_file()
     assert result is None or Path(result).exists()
-
 
 
 def test_create_config_with_N_input(tmp_path, monkeypatch):
@@ -342,4 +339,3 @@ def test_create_config_overwrite_declined(tmp_path, monkeypatch, capsys):
     captured = capsys.readouterr()
     assert "keeping" in captured.out.lower()
     assert "existing" in output_file.read_text()
-
