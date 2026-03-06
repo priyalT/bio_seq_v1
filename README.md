@@ -19,14 +19,14 @@ BioSeq is a command-line toolkit for analyzing biological sequences. It parses F
 
 ### Features
 
-- 📊 **Sequence Statistics** — lengths, GC content, base composition, reverse complements
-- 🧪 **Translation** — DNA to protein in any reading frame, or all six frames
-- 🔍 **ORF Detection** — find open reading frames with configurable minimum length and overlap detection
-- 🎯 **Motif Search** — exact and fuzzy pattern matching on single/both strands
-- 📁 **Export** — results to CSV, TSV, JSON, or FASTA format
-- ⚙️ **Configuration** — YAML-based config system with sensible defaults
-- 🐳 **Docker** — containerized and available on Quay.io
-- ✅ **Tested** — property-based tests with Hypothesis + pytest
+- **Sequence Statistics** — lengths, GC content, base composition, reverse complements
+- **Translation** — DNA to protein in any reading frame, or all six frames
+- **ORF Detection** — find open reading frames with configurable minimum length and overlap detection
+- **Motif Search** — exact and fuzzy pattern matching on single/both strands
+- **Export** — results to CSV, TSV, JSON, or FASTA format
+- **Configuration** — YAML-based config system with sensible defaults
+- **Docker** — containerized and available on Quay.io
+- **Tested** — property-based tests with Hypothesis + pytest
 
 ---
 
