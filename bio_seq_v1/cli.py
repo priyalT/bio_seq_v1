@@ -339,15 +339,18 @@ def translate(
             elif export_format == "json":
                 Exporter.to_json(export_data, file_path=output)
             elif export_format == "fasta":
-                fasta_seqs = []
+                lines = []
                 for row in export_data:
                     if "protein" in row:
-                        fasta_seqs.append(sequence(row["id"], row["protein"]))
+                        lines.append(f">{row['id']}")
+                        lines.append(row["protein"])
                     else:
                         for key, val in row.items():
                             if key.startswith("frame_"):
-                                fasta_seqs.append(sequence(f"{row['id']}_{key}", val))
-                Exporter.to_fasta(fasta_seqs, file_path=output)
+                                lines.append(f">{row['id']}_{key}")
+                                lines.append(val)
+                content = "\n".join(lines) + "\n"
+                Exporter._write_or_print(content, output)
             click.echo(f"Results saved to {output}")
     except ValueError as e:
         raise click.ClickException(str(e))
@@ -510,7 +513,7 @@ def motif(
     if not sequences:
         raise click.ClickException("No valid sequences.")
 
-    finder = MotifFinder(k=k)
+    finder = MotifFinder(k=len(pattern))
     all_motifs = []
     try:
         if mode == "single":
