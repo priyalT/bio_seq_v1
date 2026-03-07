@@ -1,6 +1,7 @@
 # 🧬 BioSeq
 
-<img width="500" height="500" alt="Logo of bioseq" src="https://github.com/user-attachments/assets/1ac4ea8a-bdd7-4768-8b86-8b43b46f5016" />
+<img align = "right" width="300" height="300" alt="bioseq logo" src="https://github.com/user-attachments/assets/4b713d9c-3af2-4f42-b568-dd72d376553e" />
+
 
 **A Python CLI toolkit for bioinformatics sequence analysis.**
 
@@ -11,9 +12,8 @@
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
----
 
-## What is BioSeq?
+### What is BioSeq?
 
 BioSeq is a command-line toolkit for analyzing biological sequences. It parses FASTA files and provides tools for sequence statistics, translation, ORF detection, and motif searching — all from your terminal.
 
